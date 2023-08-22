@@ -34,16 +34,11 @@ fn part1() {
 
 fn part2() {
     let data = include_str!("../input.txt");
-    let mut sum_priority = 0u32;
-    let mut line_id = 0;
-    let mut line_batch: [&str; 3] = [""; 3];
-
-    for l in data.lines() {
-        line_batch[line_id] = l;
-        line_id += 1;
-        line_id %= 3;
-        if line_id == 0 {
-            let mut record = [vec![0u32; 52], vec![0u32; 52], vec![0u32; 52]];
+    let sum_priority = data.lines()
+        .collect::<Vec<&str>>()
+        .chunks(3)
+        .map(|line_batch| {
+            let mut record: [Vec<u32>; 3] = [vec![0u32; 52], vec![0u32; 52], vec![0u32; 52]];
             for i in 0..3 {
                 for c in line_batch[i].chars() {
                     record[i][get_priority(c) as usize] += 1;
@@ -51,11 +46,12 @@ fn part2() {
             }
             for i in 0..52 {
                 if record[0][i] != 0 && record[1][i] != 0 && record[2][i] != 0 {
-                    sum_priority += (i as u32) + 1;
-                    break;
+                    return (i as u32) + 1;
                 }
             }
-        }
-    }
+            return 0;
+        })
+        .sum::<u32>();
+
     println!("{}", sum_priority);
 }
