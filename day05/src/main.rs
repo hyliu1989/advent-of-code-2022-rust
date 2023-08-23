@@ -1,7 +1,7 @@
 fn main() {
     part1();
     println!("==========");
-    // part2();
+    part2();
 }
 
 fn parse_instruction(line: &str) -> (u32, usize, usize) {
@@ -49,6 +49,34 @@ fn part1() {
                 None => { panic!("Error state!") },
             }
         }
+    }
+    let mut ret = String::with_capacity(stack.len());
+    for i in 0..stack.len() {
+        match stack[i].pop() {
+            Some(top_crate_char) => ret.push(top_crate_char),
+            None => {panic!("Empty stack {}", i)},
+        }
+    }
+    println!("{}", ret);
+}
+
+fn part2() {
+    let data = include_str!("../input.txt");
+    let (init_state, instructions) = data.split_once("\n\n").unwrap();
+    let mut stack = parse_stack_state(init_state);
+    for line in instructions.lines() {
+        let (num, src, des) = parse_instruction(line);
+        
+        let new_src_len = stack[src].len() - (num as usize);
+        
+        // Because of Rust does not allow borrowing `stack` as immutable and mutable at the same time,
+        // I have to clone `stack[src].split_at(new_src_len).1` in order to operate on its content.
+        // This prevents critical error that `src` and `des` happens to be the same index.
+        let moved = Vec::<char>::from(stack[src].split_at(new_src_len).1);
+        
+        // Do the moving
+        stack[des].extend_from_slice(&moved);
+        stack[src].truncate(new_src_len);
     }
     let mut ret = String::with_capacity(stack.len());
     for i in 0..stack.len() {
