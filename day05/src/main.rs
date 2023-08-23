@@ -28,9 +28,10 @@ fn parse_stack_state(state_str: &str) -> Vec<Vec<char>> {
     }
 
     for line in iter {
-        for (i, crate_str) in line.chars().collect::<Vec<char>>().chunks(4).enumerate() {
-            if crate_str[0] == '[' {
-                ret[i].push(crate_str[1]);
+        for (i, crate_str) in line.chars().skip(1).step_by(4).enumerate()
+        {
+            if crate_str != ' ' {
+                ret[i].push(crate_str);
             }
         }
     }
