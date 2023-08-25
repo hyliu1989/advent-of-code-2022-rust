@@ -20,7 +20,7 @@ fn check_distinct_seq(l: &Vec<char>, len_distinct: usize) -> usize {
         }
     };
     
-    // Build the buffer and check for the first 4 characters.
+    // Build the DP cache and then check for the first `len_distinct` characters.
     for i in 0..len_distinct {
         compare_and_record(i, 0, &mut neq_state);
     }
