@@ -33,7 +33,6 @@ impl Entry {
 fn main() {
     let data = include_str!("../input.txt");
     part1(&mut data.lines().peekable());
-    println!("============");
 }
 
 fn part1<I>(lines: &mut Peekable<I>)
@@ -92,6 +91,19 @@ where I: Iterator<Item = &'static str>
         }
     }
     println!("{}", accum);
+
+    println!("============");
+    let current_used_space = dir_trace[0].borrow().size.get();
+    let current_space = 70_000_000 - current_used_space;
+
+    dir_trace.sort_by_key(|a| { a.borrow().size.get() });
+    for d in dir_trace {
+        let size = d.borrow().size.get();
+        if size >= 30000000 - current_space {
+            println!("part 2 {}", size);
+            break;
+        }
+    }
 }
 
 fn ls_populate<I>(lines: &mut Peekable<I>, parent_folder: &mut Entry)
