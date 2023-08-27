@@ -4,24 +4,28 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::HashMap;
 
+#[derive(PartialEq)]
 enum EntryInfo {
     File,
-    Directory {map: HashMap<String, Rc<RefCell<Entry>>>},
+    Directory,
 }
 
 struct Entry {
     size: Cell<i64>,
     info: EntryInfo,
+    dir_content: Option<HashMap<String, Rc<RefCell<Entry>>>>,
 }
 
 impl Entry {
     fn new_dir() -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(
-            Self { size: Cell::new(0), info: EntryInfo::Directory{ map: HashMap::new() } }
+            Self { size: Cell::new(0), info: EntryInfo::Directory, dir_content: Some(HashMap::new()) }
         ))
     }
     fn new_file(size: i64) -> Rc<RefCell<Entry>> {
-        Rc::new(RefCell::new(Entry { size: Cell::new(size), info: EntryInfo::File }))
+        Rc::new(RefCell::new(
+            Self { size: Cell::new(size), info: EntryInfo::File, dir_content: None }
+        ))
     }
 }
 
@@ -55,14 +59,12 @@ where I: Iterator<Item = &'static str>
             },
             command if &line[0..4] == "$ cd" => {
                 let folder_name = command.split_once("$ cd ").unwrap().1;
-                let curr_dir = dir_trace.last().unwrap().clone();
-                let entry_info = &curr_dir.borrow().info;
-                match entry_info {
-                    EntryInfo::Directory {ref map} => {
-                        let dest_dir = map.get(folder_name).unwrap();
-                        dir_trace.push(dest_dir.clone());
-                    },
-                    EntryInfo::File => {},
+                let _curr_dir = dir_trace.last().unwrap().clone();
+                let curr_dir = _curr_dir.borrow();
+                assert!(curr_dir.info == EntryInfo::Directory);
+                if let Some(ref map) = curr_dir.dir_content {
+                    let dest_dir = map.get(folder_name).unwrap();
+                    dir_trace.push(dest_dir.clone());
                 }
             },
             // Populating.
@@ -95,37 +97,32 @@ where I: Iterator<Item = &'static str>
 fn ls_populate<I>(lines: &mut Peekable<I>, parent_folder: &mut Entry)
 where I: Iterator<Item = &'static str>
 {
-    match parent_folder.info {
-        EntryInfo::Directory { ref mut map } => {
-            // map.insert(String::from("AAA"), Entry::new_file(0));
-            while let Some(line) = lines.next_if(|&l| {l.chars().nth(0).unwrap() != '$'}) {
-                let (type_or_size, name) = line.split_once(' ').unwrap();
-                match type_or_size.parse::<i64>() {
-                    Ok(size) => { map.insert(String::from(name), Entry::new_file(size)); },
-                    Err(_) => { map.insert(String::from(name), Entry::new_dir()); },
-                }
+    assert!(parent_folder.info == EntryInfo::Directory);
+    if let Some(ref mut map) = parent_folder.dir_content {
+        while let Some(line) = lines.next_if(|&l| {l.chars().nth(0).unwrap() != '$'}) {
+            let (type_or_size, name) = line.split_once(' ').unwrap();
+            match type_or_size.parse::<i64>() {
+                Ok(size) => { map.insert(String::from(name), Entry::new_file(size)); },
+                Err(_) => { map.insert(String::from(name), Entry::new_dir()); },
             }
         }
-        EntryInfo::File => {},
     }
 }
 
 fn dfs_populate_size(dir_entry: Rc<RefCell<Entry>>, trace: &mut Vec<Rc<RefCell<Entry>>>) {
     let mut accum_size = 0;
-    match dir_entry.borrow().info {
-        EntryInfo::Directory { ref map } => {
-            for entry in map.values() {
-                match entry.borrow().info {
-                    EntryInfo::File => {},
-                    EntryInfo::Directory {map: _} => {
-                        trace.push(entry.clone());
-                        dfs_populate_size(entry.clone(), trace);
-                    },
-                }
-                accum_size += entry.borrow().size.get();
+    assert!(dir_entry.borrow().info == EntryInfo::Directory);
+    if let Some(ref map) = dir_entry.borrow().dir_content {
+        for entry in map.values() {
+            match entry.borrow().info {
+                EntryInfo::File => {},
+                EntryInfo::Directory => {
+                    trace.push(entry.clone());
+                    dfs_populate_size(entry.clone(), trace);
+                },
             }
-        },
-        EntryInfo::File => {},
+            accum_size += entry.borrow().size.get();
+        }
     }
     dir_entry.borrow().size.set(accum_size);
 }
