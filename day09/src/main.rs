@@ -43,10 +43,16 @@ impl Knot {
     }
 }
 
+impl Default for Knot {
+    fn default() -> Self { Knot {i: 0, j: 0, trace: None} }
+}
+
 fn main() {
     let data = include_str!("../input.txt");
     part1(data);
-    println!("Hello, world!");
+    println!("==============");
+    // part2(include_str!("../input_small.txt"));
+    part2(data);
 }
 
 fn part1(data: &str) {
@@ -103,4 +109,61 @@ fn part1(data: &str) {
 
     println!("{}", tail_trace.len());
     println!("{}", tail.trace.unwrap().len());
+}
+
+
+fn part2(data: &str) {
+    let (mut i, mut j) = (0i32, 0i32);  // Head position
+    let mut tails:[Knot; 9] = Default::default();
+    tails[8] = Knot::new(0, 0, Some(HashSet::new()));
+
+    for line in data.lines() {
+        let (direction, num_steps) = line.split_once(' ').unwrap();
+        let num_steps: i32 = num_steps.parse().unwrap();
+        let (delta_i, delta_j) = match direction {
+            "U" => { (-1,  0) },
+            "D" => { ( 1,  0) },
+            "L" => { ( 0, -1) },
+            "R"|_ => { (0, 1) },
+        };
+        for _ in 0..num_steps {
+            i += delta_i;
+            j += delta_j;
+            let mut ii = i;
+            let mut jj = j;
+            for idx in 0..9 {
+                tails[idx].update(ii, jj);
+                (ii, jj) = (tails[idx].i, tails[idx].j);
+            }
+        }
+
+        // {
+        //     // Debug print
+        //     print!("({},{}) ", i, j);
+        //     for idx in 0..9 {
+        //         print!("({},{}) ", tails[idx].i, tails[idx].j);
+        //     }
+        //     println!("");
+        // }
+    }
+    println!("{}", tails[8].trace.as_ref().unwrap().len());
+
+    // {
+    //     // debug print with input_small.txt
+    //     let positions = tails[8].trace.as_ref().unwrap();
+    //     let x_off = 20;
+    //     const x_len: usize = 41;
+    //     let y_off = 20;
+    //     const y_len: usize= 41;
+    //     let mut map = [[0u8; x_len]; y_len];
+    //     for (i, j) in positions {
+    //         map[(i+y_off) as usize][(j+x_off) as usize] = 1;
+    //     }
+    //     for i in 0..y_len {
+    //         for j in 0..x_len {
+    //             print!("{}", if map[i][j] == 1 { "#" } else { "." } );
+    //         }
+    //         println!("");
+    //     }
+    // }
 }
