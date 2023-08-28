@@ -41,15 +41,12 @@ fn part1(data: &str) {
         for line in data.lines() {
             let (direction, num_steps) = line.split_once(' ').unwrap();
             let num_steps: i32 = num_steps.parse().unwrap();
-            let mut delta_i = 0i32;
-            let mut delta_j = 0i32;
-            match direction {
-                "U" => { delta_i = -1; },
-                "D" => { delta_i =  1; },
-                "L" => { delta_j = -1; },
-                "R" => { delta_j =  1; },
-                _ => {},
-            }
+            let (delta_i, delta_j) = match direction {
+                "U" => { (-1,  0) },
+                "D" => { ( 1,  0) },
+                "L" => { ( 0, -1) },
+                "R"|_ => { (0, 1) },
+            };
             for _ in 0..num_steps {
                 i += delta_i;
                 j += delta_j;
