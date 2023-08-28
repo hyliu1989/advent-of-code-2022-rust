@@ -1,5 +1,45 @@
 use std::collections::HashSet;
 
+
+struct Knot { i: i32, j: i32, trace: Option<HashSet<(i32, i32)>> }
+
+impl Knot {
+    fn new(i:i32, j:i32, mut trace: Option<HashSet<(i32, i32)>>) -> Self {
+        if let Some(ref mut trace_map) = trace {
+            trace_map.insert((i, j));
+        }
+        Knot {i, j, trace}
+    }
+    fn update(&mut self, head_i: i32, head_j: i32) {
+        /* Update the tail position with given head position. */
+        let mut changed: bool = false;
+        if (head_i - self.i) >= 2 {
+            self.i = head_i - 1;
+            self.j = head_j;
+            changed = true;
+        } else if (head_i - self.i) <= -2 {
+            self.i = head_i + 1;
+            self.j = head_j;
+            changed = true;
+        }
+        if (head_j - self.j) >= 2 {
+            self.i = head_i;
+            self.j = head_j - 1;
+            changed = true;
+        } else if (head_j - self.j) <= -2 {
+            self.i = head_i;
+            self.j = head_j + 1;
+            changed = true;
+        }
+        if !changed {
+            return;
+        }
+        if let Some(ref mut trace) = self.trace {
+            trace.insert((self.i, self.j));
+        }
+    }
+}
+
 fn main() {
     let data = include_str!("../input.txt");
     part1(data);
@@ -11,6 +51,8 @@ fn part1(data: &str) {
     let (mut ii, mut jj) = (0i32, 0i32);  // Tail position
     let mut tail_trace: HashSet<(i32, i32)> = HashSet::new();
     tail_trace.insert((0, 0));
+    // Parallelly using Knot struct to run the same thing to verify Knot implementation.
+    let mut tail = Knot::new(0, 0, Some(HashSet::new()));
 
     {
         let mut update_tail = |i:i32, j: i32| {
@@ -51,9 +93,11 @@ fn part1(data: &str) {
                 i += delta_i;
                 j += delta_j;
                 update_tail(i, j);
+                tail.update(i, j)
             }
         }
     }
 
     println!("{}", tail_trace.len());
+    println!("{}", tail.trace.unwrap().len());
 }
