@@ -69,13 +69,13 @@ fn part1(data: &[u8]) {
     visible.slice_mut(s![.., n-1]).fill(1);
     let mut max_buf_right = forest_height.slice(s![.., n-1]).to_owned();
     for j in 1..n {
-        for i in 0..n {
+        for i in 0..m {
             if forest_height[[i, j]] > max_buf[i] {
                 max_buf[i] = forest_height[[i, j]];
                 visible[[i, j]] = 1u8;
             }
         }
-        for i in 0..n {
+        for i in 0..m {
             if forest_height[[i, n-1-j]] > max_buf_right[i] {
                 max_buf_right[i] = forest_height[[i, n-1-j]];
                 visible[[i, n-1-j]] = 1u8;
