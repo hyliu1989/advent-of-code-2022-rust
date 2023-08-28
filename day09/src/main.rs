@@ -12,26 +12,29 @@ impl Knot {
     }
     fn update(&mut self, head_i: i32, head_j: i32) {
         /* Update the tail position with given head position. */
-        let mut changed: bool = false;
+        let mut i_shifted = false;
+        let mut j_shifted = false;
         if (head_i - self.i) >= 2 {
             self.i = head_i - 1;
-            self.j = head_j;
-            changed = true;
+            i_shifted = true;
         } else if (head_i - self.i) <= -2 {
             self.i = head_i + 1;
-            self.j = head_j;
-            changed = true;
+            i_shifted = true;
         }
         if (head_j - self.j) >= 2 {
-            self.i = head_i;
             self.j = head_j - 1;
-            changed = true;
+            j_shifted = true;
         } else if (head_j - self.j) <= -2 {
-            self.i = head_i;
             self.j = head_j + 1;
-            changed = true;
+            j_shifted = true;
         }
-        if !changed {
+        if i_shifted && !j_shifted {
+            self.j = head_j;
+        }
+        if j_shifted && !i_shifted {
+            self.i = head_i;
+        }
+        if !(i_shifted || j_shifted) {
             return;
         }
         if let Some(ref mut trace) = self.trace {
