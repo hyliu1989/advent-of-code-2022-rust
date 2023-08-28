@@ -1,4 +1,5 @@
 extern crate ndarray;
+use either::Either;
 use ndarray::prelude::*;
 
 
@@ -93,61 +94,54 @@ fn part2(data: &[u8]) {
     let (m, n) = forest_height.dim();
     let mut score = Array2::<u32>::ones((m, n));
 
-    let mut dp_num_seen = Array2::<u32>::ones((n, NUM_HEIGHTS));
-    score.slice_mut(s![0, ..]).fill(0);
-    for i in 1..m {
-        for j in 0..n {
-            let height = forest_height[[i, j]] as usize;
-            score[[i, j]] *= dp_num_seen[[j, height]];
-            for k in 0..(height+1) {
-                dp_num_seen[[j, k]] = 1;
+    {
+        let mut sweep_tb = |dir: i8| {
+            let mut i_iter = 
+                if dir == 1 { Either::Left(0..m) } else { Either::Right((0..m).rev()) };
+            let j_iter = 0..n;
+
+            let mut dp_num_seen = Array2::<u32>::ones((n, NUM_HEIGHTS));
+            let first = i_iter.next().unwrap();
+            score.index_axis_mut(Axis(0), first).fill(0);
+            for i in i_iter {
+                for j in j_iter.clone() {
+                    let height = forest_height[[i, j]] as usize;
+                    score[[i, j]] *= dp_num_seen[[j, height]];
+                    for k in 0..(height+1) {
+                        dp_num_seen[[j, k]] = 1;
+                    }
+                    for k in (height+1)..NUM_HEIGHTS {
+                        dp_num_seen[[j, k]] += 1;
+                    }
+                }
             }
-            for k in (height+1)..NUM_HEIGHTS {
-                dp_num_seen[[j, k]] += 1;
-            }
-        }
+        };
+        sweep_tb(1);
+        sweep_tb(-1);
     }
-    let mut dp_num_seen = Array2::<u32>::ones((n, NUM_HEIGHTS));
-    score.slice_mut(s![m-1, ..]).fill(0);
-    for i in (0..m-1).rev() {
-        for j in 0..n {
-            let height = forest_height[[i, j]] as usize;
-            score[[i, j]] *= dp_num_seen[[j, height]];
-            for k in 0..(height+1) {
-                dp_num_seen[[j, k]] = 1;
+    {
+        let mut sweep_lr = |dir: i8| {
+            let i_iter = 0..n;
+            let mut j_iter = 
+                if dir == 1 { Either::Left(0..n) } else { Either::Right((0..n).rev()) };
+            let mut dp_num_seen = Array2::<u32>::ones((m, NUM_HEIGHTS));
+            let first = j_iter.next().unwrap();
+            score.index_axis_mut(Axis(1), first).fill(0);
+            for j in j_iter {
+                for i in i_iter.clone() {
+                    let height = forest_height[[i, j]] as usize;
+                    score[[i, j]] *= dp_num_seen[[i, height]];
+                    for k in 0..(height+1) {
+                        dp_num_seen[[i, k]] = 1;
+                    }
+                    for k in (height+1)..NUM_HEIGHTS {
+                        dp_num_seen[[i, k]] += 1;
+                    }
+                }
             }
-            for k in (height+1)..NUM_HEIGHTS {
-                dp_num_seen[[j, k]] += 1;
-            }
-        }
-    }
-    let mut dp_num_seen = Array2::<u32>::ones((m, NUM_HEIGHTS));
-    score.slice_mut(s![.., 0]).fill(0);
-    for j in 1..n {
-        for i in 0..m {
-            let height = forest_height[[i, j]] as usize;
-            score[[i, j]] *= dp_num_seen[[i, height]];
-            for k in 0..(height+1) {
-                dp_num_seen[[i, k]] = 1;
-            }
-            for k in (height+1)..NUM_HEIGHTS {
-                dp_num_seen[[i, k]] += 1;
-            }
-        }
-    }
-    let mut dp_num_seen = Array2::<u32>::ones((m, NUM_HEIGHTS));
-    score.slice_mut(s![.., n-1]).fill(0);
-    for j in (0..n-1).rev() {
-        for i in 0..m {
-            let height = forest_height[[i, j]] as usize;
-            score[[i, j]] *= dp_num_seen[[i, height]];
-            for k in 0..(height+1) {
-                dp_num_seen[[i, k]] = 1;
-            }
-            for k in (height+1)..NUM_HEIGHTS {
-                dp_num_seen[[i, k]] += 1;
-            }
-        }
+        };
+        sweep_lr(1);
+        sweep_lr(-1);
     }
 
     let mut max = 0u32;
