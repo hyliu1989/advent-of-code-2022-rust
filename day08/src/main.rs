@@ -95,53 +95,45 @@ fn part2(data: &[u8]) {
     let mut score = Array2::<u32>::ones((m, n));
 
     {
-        let mut sweep_tb = |dir: i8| {
-            let mut i_iter = 
-                if dir == 1 { Either::Left(0..m) } else { Either::Right((0..m).rev()) };
-            let j_iter = 0..n;
+        let mut sweep = |dir: i8, dim: u8| {
+            /* 
+            The major direction: We compare the height of trees in this direction.
+            The minor direction: Parallel processing. Each element in this direction is independent.
 
-            let mut dp_num_seen = Array2::<u32>::ones((n, NUM_HEIGHTS));
-            let first = i_iter.next().unwrap();
-            score.index_axis_mut(Axis(0), first).fill(0);
-            for i in i_iter {
-                for j in j_iter.clone() {
-                    let height = forest_height[[i, j]] as usize;
-                    score[[i, j]] *= dp_num_seen[[j, height]];
+            When dim is 0, we either sweep from top to bottom (dir==1) or bottom to top (dir==-1).
+            When dim is 1, we either sweep from left to right (dir==1) or right to left (dir==-1).
+            */
+            let (n_major, n_minor) = if dim == 0 { (m, n) } else { (n, m) };
+            let minor_iter = 0..n_minor;
+            let mut major_iter = 
+                if dir == 1 { Either::Left(0..n_major) } else { Either::Right((0..n_major).rev())};
+            let get_ij = if dim == 0 {
+                |i_major: usize, i_minor: usize| { [i_major, i_minor] }
+            } else {
+                |i_major: usize, i_minor: usize| { [i_minor, i_major] }
+            };
+            let mut dp_num_seen = Array2::<u32>::ones((n_minor, NUM_HEIGHTS));
+            let first = major_iter.next().unwrap();
+            score.index_axis_mut(Axis(dim as usize), first).fill(0);
+            for i_major in major_iter {
+                for i_minor in minor_iter.clone() {
+                    let ij = get_ij(i_major, i_minor);
+                    let height = forest_height[ij] as usize;
+                    score[ij] *= dp_num_seen[[i_minor, height]];
                     for k in 0..(height+1) {
-                        dp_num_seen[[j, k]] = 1;
+                        dp_num_seen[[i_minor, k]] = 1;
                     }
                     for k in (height+1)..NUM_HEIGHTS {
-                        dp_num_seen[[j, k]] += 1;
+                        dp_num_seen[[i_minor, k]] += 1;
                     }
                 }
             }
         };
-        sweep_tb(1);
-        sweep_tb(-1);
-    }
-    {
-        let mut sweep_lr = |dir: i8| {
-            let i_iter = 0..n;
-            let mut j_iter = 
-                if dir == 1 { Either::Left(0..n) } else { Either::Right((0..n).rev()) };
-            let mut dp_num_seen = Array2::<u32>::ones((m, NUM_HEIGHTS));
-            let first = j_iter.next().unwrap();
-            score.index_axis_mut(Axis(1), first).fill(0);
-            for j in j_iter {
-                for i in i_iter.clone() {
-                    let height = forest_height[[i, j]] as usize;
-                    score[[i, j]] *= dp_num_seen[[i, height]];
-                    for k in 0..(height+1) {
-                        dp_num_seen[[i, k]] = 1;
-                    }
-                    for k in (height+1)..NUM_HEIGHTS {
-                        dp_num_seen[[i, k]] += 1;
-                    }
-                }
-            }
-        };
-        sweep_lr(1);
-        sweep_lr(-1);
+        
+        sweep(1, 0);
+        sweep(-1, 0);
+        sweep(1, 1);
+        sweep(-1, 1);
     }
 
     let mut max = 0u32;
