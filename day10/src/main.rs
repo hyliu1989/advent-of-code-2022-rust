@@ -1,12 +1,6 @@
 fn main() {
     let data = include_str!("../input.txt");
-    part1(data);
-    println!("=================");
-}
-
-fn part1(data: &str) {
     let mut record: Vec<i32> = Vec::new();  // element:  value of X reg
-
     let mut x: i32 = 1;
     for line in data.lines() {
         match line {
@@ -19,6 +13,12 @@ fn part1(data: &str) {
             }
         }
     }
+
+    part1(&record);
+    println!("=================");
+}
+
+fn part1(record: &Vec<i32>) {
     println!(
         "{}",
         [20, 60, 100, 140, 180, 220]
@@ -26,5 +26,4 @@ fn part1(data: &str) {
             .into_iter()
             .sum::<i32>(),
     );
-
 }
