@@ -13,9 +13,9 @@ fn main() {
             }
         }
     }
-
     part1(&record);
     println!("=================");
+    part2(&record);
 }
 
 fn part1(record: &Vec<i32>) {
@@ -26,4 +26,19 @@ fn part1(record: &Vec<i32>) {
             .into_iter()
             .sum::<i32>(),
     );
+}
+
+fn part2(record: &Vec<i32>) {
+    let mut ret = [' '; 240];
+    for idx in 0..240usize {
+        let i_crt_pos = (idx as i32) % 40;
+        if record[idx].abs_diff(i_crt_pos) <= 1 {
+            ret[idx] = '#';
+        }
+    }
+    for crt_line in ret.chunks_exact(40) {
+        let string: String = crt_line.iter().collect();
+        println!("{}", string);
+    }
+    
 }
