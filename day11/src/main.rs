@@ -1,8 +1,10 @@
 
+type WorryLevel = u64;
+
 struct Monkey {
-    holding: Vec<i32>,
-    insp_op: Box<dyn Fn(i32) -> i32>,
-    test_op: Box<dyn Fn(i32) -> usize>,
+    holding: Vec<WorryLevel>,
+    insp_op: Box<dyn Fn(WorryLevel) -> WorryLevel>,
+    test_op: Box<dyn Fn(WorryLevel) -> usize>,
     count: u32,
 }
 
@@ -12,24 +14,24 @@ fn build_monkeys(data: &str) -> Vec<Monkey>{
             let lines: Vec<&str> = monkey_input.lines().collect();
             let holding_gen = lines[1]
                 .split_once("  Starting items: ").unwrap().1.split(", ")
-                .map(|num_str| num_str.parse::<i32>().unwrap());
-            let insp_op: Box<dyn Fn(i32) -> i32> = {
+                .map(|num_str| num_str.parse::<WorryLevel>().unwrap());
+            let insp_op: Box<dyn Fn(WorryLevel) -> WorryLevel> = {
                 let terms: Vec<&str> = lines[2].split_once("new = ").unwrap().1.split(" ").collect();
                 assert!(terms[0] == "old");
                 match terms[2] {
-                    "old" => { Box::new(move |old: i32| {old * old}) },
+                    "old" => { Box::new(move |old: WorryLevel| {old * old}) },
                     n_str => {
-                        match (terms[1], n_str.parse::<i32>().unwrap()) {
-                            ("*", n) => { Box::new(move |old: i32| { old * n }) },
-                            ("+", n) => { Box::new(move |old: i32| { old + n }) },
+                        match (terms[1], n_str.parse::<WorryLevel>().unwrap()) {
+                            ("*", n) => { Box::new(move |old: WorryLevel| { old * n }) },
+                            ("+", n) => { Box::new(move |old: WorryLevel| { old + n }) },
                             _ => unreachable!(),
                         }
                     },
                 }
             };
-            let test_op: Box<dyn Fn(i32) -> usize> = {
+            let test_op: Box<dyn Fn(WorryLevel) -> usize> = {
                 let parse = |line: &str, delim: &str| {
-                    line.split_once(delim).unwrap().1.parse::<i32>().unwrap()
+                    line.split_once(delim).unwrap().1.parse::<WorryLevel>().unwrap()
                 };
                 let divisor = parse(lines[3], "divisible by ");
                 let true_ret = parse(lines[4], "throw to monkey ") as usize;
@@ -38,7 +40,7 @@ fn build_monkeys(data: &str) -> Vec<Monkey>{
                     move |worry_level| { if worry_level % divisor == 0 { true_ret } else {false_ret} }
                 )
             };
-            Monkey { holding: holding_gen.collect::<Vec<i32>>(), insp_op, test_op, count: 0 }
+            Monkey { holding: holding_gen.collect::<Vec<WorryLevel>>(), insp_op, test_op, count: 0 }
         })
         .collect()
 }
