@@ -6,10 +6,8 @@ struct Monkey {
     count: u32,
 }
 
-fn main() {
-    println!("Hello, world!");
-    let data = include_str!("../input.txt");
-    let mut monkeys: Vec<_> = data.split("\n\n")
+fn build_monkeys(data: &str) -> Vec<Monkey>{
+    data.split("\n\n")
         .map(|monkey_input| {
             let lines: Vec<&str> = monkey_input.lines().collect();
             let holding_gen = lines[1]
@@ -42,7 +40,11 @@ fn main() {
             };
             Monkey { holding: holding_gen.collect::<Vec<i32>>(), insp_op, test_op, count: 0 }
         })
-        .collect();
+        .collect()
+}
+
+fn part1(data: &str) {
+    let mut monkeys = build_monkeys(data);
 
     let mut temp_bags = vec![vec![0; 0]; monkeys.len()];
     for _ in 0..20 {
@@ -57,10 +59,12 @@ fn main() {
         }
     }
 
-    let mut counts: Vec<u32> = Vec::new();
-    for m in monkeys.iter() {
-        counts.push(m.count);
-    }
+    let mut counts: Vec<u32> = monkeys.iter().map(|m| m.count).collect();
     counts.sort();
     println!("{}", counts[counts.len()-1] * counts[counts.len()-2]);
+}
+
+fn main() {
+    let data = include_str!("../input.txt");
+    part1(data);
 }
