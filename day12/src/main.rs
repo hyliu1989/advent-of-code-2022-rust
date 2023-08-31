@@ -26,19 +26,14 @@ fn build_map(data: &[u8]) -> ((usize, usize), (usize, usize), ndarray::Array2<u8
     (start_pos, end_pos, map)
 }
 
-fn part1(data: &[u8]) {
-    let (start_pos, end_pos, map) = build_map(data);
+fn run_bfs(mut queue: VecDeque::<[usize;2]>, mut visited: ndarray::Array2<u32>,
+           map: ndarray::Array2<u8>, end_pos: (usize, usize)) -> i32 {
     let (m, n) = map.dim();
-    let mut visited = ndarray::Array2::<u32>::zeros(map.dim());
-    let mut bfs: VecDeque::<[usize;2]> = VecDeque::new();
-    visited[[start_pos.0, start_pos.1]] = 1;
-    bfs.push_back([start_pos.0, start_pos.1]);
-    let mut ret: i32 = -1;
-    while let Some(curr) = bfs.pop_front() {
+    while let Some(curr) = queue.pop_front() {
         let step_to_here = visited[curr];
         if curr == [end_pos.0, end_pos.1] {
-            ret = (step_to_here - 1) as i32;  // subtract 1 because the start position has count 1 instead of 0.
-            break;
+            // subtract 1 because the start position has count 1 instead of 0.
+            return (step_to_here - 1) as i32
         }
         let max_reach = map[curr] + 1;
         let mut neighbors: Vec<[usize; 2]> = Vec::new();
@@ -50,10 +45,20 @@ fn part1(data: &[u8]) {
             if visited[neighbor] != 0 { continue; }
             if map[neighbor] <= max_reach {
                 visited[neighbor] = step_to_here + 1;
-                bfs.push_back(neighbor);
+                queue.push_back(neighbor);
             }
         }
     }
+    -1
+}
+
+fn part1(data: &[u8]) {
+    let (start_pos, end_pos, map) = build_map(data);
+    let mut visited = ndarray::Array2::<u32>::zeros(map.dim());
+    let mut bfs: VecDeque::<[usize;2]> = VecDeque::new();
+    visited[[start_pos.0, start_pos.1]] = 1;
+    bfs.push_back([start_pos.0, start_pos.1]);
+    let ret = run_bfs(bfs, visited, map, end_pos);
     println!("{}", ret);
 }
 
