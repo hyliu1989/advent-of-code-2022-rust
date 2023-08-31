@@ -62,8 +62,23 @@ fn part1(data: &[u8]) {
     println!("{}", ret);
 }
 
+fn part2(data: &[u8]) {
+    let (_, end_pos, map) = build_map(data);
+    let mut visited = ndarray::Array2::<u32>::zeros(map.dim());
+    let mut bfs: VecDeque::<[usize;2]> = VecDeque::new();
+    for ((i, j), el) in map.indexed_iter() {
+        if *el == 1 {
+            visited[[i, j]] = 1;
+            bfs.push_back([i, j]);
+        }
+    }
+    let ret = run_bfs(bfs, visited, map, end_pos);
+    println!("{}", ret);
+}
+
 fn main() {
     let data = include_bytes!("../input.txt");
     part1(data);
-    println!("Hello, world!");
+    println!("=========================");
+    part2(data);
 }
