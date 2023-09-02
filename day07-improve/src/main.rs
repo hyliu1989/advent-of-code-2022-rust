@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 enum EntryInfo {
     File,
-    Directory(HashMap<String, Entry>),
+    Directory(RefCell<HashMap<String, Entry>>),
 }
 
 struct Entry {
@@ -16,15 +16,15 @@ struct Entry {
 
 impl Entry {
     fn new_dir() -> Self {
-        Self { size: Cell::new(0), info: EntryInfo::Directory(HashMap::new()) }
+        Self { size: Cell::new(0), info: EntryInfo::Directory(RefCell::new(HashMap::new())) }
     }
     fn new_file(size: i64) -> Self {
         Self { size: Cell::new(size), info: EntryInfo::File }
     }
-    fn get_map_mut(&mut self) -> Option<&mut HashMap<String, Entry>> {
-        match &mut self.info {
+    fn get_map<'a>(&'a self) -> Option<&'a RefCell<HashMap<String, Entry>>> {
+        match self.info {
             EntryInfo::File => { None },
-            EntryInfo::Directory(ref mut map) => {
+            EntryInfo::Directory(ref map) => {
                 Some(map)
             }
         }
@@ -41,8 +41,8 @@ fn build_filesys_tree(data: &str) -> Entry {
     // - fn part1<I>(lines: &mut Peekable<I>) where I: Iterator<Item = &'static str>
     // - fn part1(lines: &mut Peekable<impl Iterator<Item = &'static str>>)
 
-    let mut root = Entry::new_dir();
-    let mut dir_trace: Vec<&mut HashMap<String, Entry>> = vec![root.get_map_mut().unwrap()];
+    let root = Entry::new_dir();
+    let mut dir_trace: Vec<&Entry> = vec![&root];
     while let Some(line) = lines.next() {
         match line {
             // Navigation.
@@ -58,15 +58,15 @@ fn build_filesys_tree(data: &str) -> Entry {
             },
             command if &line[0..4] == "$ cd" => {
                 let folder_name = command.split_once("$ cd ").unwrap().1;
-                let curr_dir_map = dir_trace.pop().unwrap();
-                let dest_dir_map = curr_dir_map.get_mut(folder_name).unwrap().get_map_mut().unwrap();
-                dir_trace.push(curr_dir_map);
-                dir_trace.push(dest_dir_map);
+
+                let curr_dir = *dir_trace.last().unwrap();
+                // let dest_dir = curr_dir.get_map().unwrap().borrow().get(folder_name).unwrap();
+                // dir_trace.push(dest_dir);
             },
             // Populating.
             _ if &line[0..4] == "$ ls" => {
-                let curr_dir_map = *dir_trace.last_mut().unwrap();
-                ls_populate(&mut lines, *curr_dir_map);
+                let parent_folder = *dir_trace.last().unwrap();
+                ls_populate(&mut lines, parent_folder);
             },
             // Report unrecognized.
             unrecognized => { println!("unrecognized line ({})! ", unrecognized); },
@@ -75,9 +75,10 @@ fn build_filesys_tree(data: &str) -> Entry {
     root
 }
 
-fn ls_populate<I>(lines: &mut Peekable<I>, mut parent_folder_map: HashMap<String, Entry>)
-where I: Iterator<Item = &'static str>
+fn ls_populate<'a, I>(lines: &'a mut Peekable<I>, parent_folder: &Entry)
+where I: Iterator<Item = &'a str>
 {
+    let mut parent_folder_map = parent_folder.get_map().unwrap().borrow_mut();
     while let Some(line) = lines.next_if(|&l| {l.chars().nth(0).unwrap() != '$'}) {
         let (type_or_size, name) = line.split_once(' ').unwrap();
         match type_or_size.parse::<i64>() {
@@ -95,17 +96,17 @@ fn main() {
 fn part1(data: &str) {
     let mut root = build_filesys_tree(data);
 
-    // Update the size of directories
-    let mut dir_entries = dfs_populate_size(&mut root);
+    // // Update the size of directories
+    // let mut dir_entries = dfs_populate_size(&mut root);
 
-    // Accumulate the total (repeated) size count of directories that are at most 100000.
-    let accum = dir_entries.into_iter()
-        .filter_map(|en| {
-            let size = en.size.get();
-            if size <= 100000 { Some(size) } else { None }
-        })
-        .sum::<i64>();
-    println!("{}", accum);
+    // // Accumulate the total (repeated) size count of directories that are at most 100000.
+    // let accum = dir_entries.into_iter()
+    //     .filter_map(|en| {
+    //         let size = en.size.get();
+    //         if size <= 100000 { Some(size) } else { None }
+    //     })
+    //     .sum::<i64>();
+    // println!("{}", accum);
 
     // println!("============");
     // let current_used_space = dir_trace[0].borrow().size.get();
@@ -123,24 +124,23 @@ fn part1(data: &str) {
 
 
 /* Returns a Vec of references to directory Entry's. */
-fn dfs_populate_size<'a>(dir_entry: &'a mut Entry) -> Vec<&'a Entry> {
-    let mut accum_size = 0;
-    let mut dir_entries: Vec<&'a Entry> = vec![];
-    {
-        let map = dir_entry.get_map_mut().unwrap();
-        for entry in map.values_mut() {
-            match entry.info {
-                EntryInfo::File => {},
-                EntryInfo::Directory(_) => {
-                    let mut subdir_entries = dfs_populate_size(entry);
-                    dir_entries.append(&mut subdir_entries);
-                },
-            }
-            accum_size += entry.size.get();
-        }
-    }
+// fn dfs_populate_size<'a>(dir_entry: &'a Entry) -> Vec<&'a Entry> {
+//     let mut accum_size = 0;
+//     let mut dir_entries: Vec<&'a Entry> = vec![];
     
-    // dir_entry.size.set(accum_size);
-    dir_entries.push(dir_entry);
-    dir_entries
-}
+//     let mut map = dir_entry.get_map().unwrap().borrow_mut();
+//     for entry in map.values_mut() {
+//         match entry.info {
+//             EntryInfo::File => {},
+//             EntryInfo::Directory(_) => {
+//                 let mut subdir_entries = dfs_populate_size(entry);
+//                 dir_entries.append(&mut subdir_entries);
+//             },
+//         }
+//         accum_size += entry.size.get();
+//     }
+    
+//     dir_entry.size.set(accum_size);
+//     dir_entries.push(dir_entry);
+//     dir_entries
+// }
