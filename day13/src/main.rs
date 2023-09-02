@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 fn main() {
     let data = include_str!("../input.txt");
     part1(data);
-    println!("Hello, world!");
+    println!("=============");
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -91,8 +91,8 @@ fn parse_packet_line(line: &[u8]) -> PacketData {
     return ret;
 }
 
-fn parse_packet_pairs(data: &str) -> Vec<(PacketData, PacketData)> {
-    data.split("\n\n")
+fn part1(data: &str) {
+    let count = data.split("\n\n")
         .map(|two_lines|{
             let mut two_line_iter = two_lines.lines();
             (
@@ -100,16 +100,9 @@ fn parse_packet_pairs(data: &str) -> Vec<(PacketData, PacketData)> {
                 parse_packet_line(two_line_iter.next().unwrap().as_bytes()),
             )
         })
-        .collect::<Vec<(PacketData, PacketData)>>()
-}
-
-fn part1(data: &str) {
-    let mut count = 0;
-    let inner_data = parse_packet_pairs(data);
-    for (i, (left, right)) in inner_data.iter().enumerate() {
-        if left < right {
-            count += i + 1;
-        }
-    }
+        .enumerate()
+        .filter(|(_, (left, right))| { left < right })
+        .map(|(i, _)| { i + 1 })
+        .sum::<usize>();
     println!("{}", count);
 }
