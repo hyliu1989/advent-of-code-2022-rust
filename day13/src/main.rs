@@ -4,6 +4,7 @@ fn main() {
     let data = include_str!("../input.txt");
     part1(data);
     println!("=============");
+    part2(data);
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -105,4 +106,23 @@ fn part1(data: &str) {
         .map(|(i, _)| { i + 1 })
         .sum::<usize>();
     println!("{}", count);
+}
+
+fn part2(data: &str) {
+    let mut items = data.lines()
+        .filter(|l| { l.len() != 0 })
+        .map(|l| { parse_packet_line(l.as_bytes()) })
+        .collect::<Vec<_>>();
+    items.push(parse_packet_line("[[2]]".as_bytes()));
+    items.push(parse_packet_line("[[6]]".as_bytes()));
+    items.sort();
+
+    let p2 = parse_packet_line("[[2]]".as_bytes());
+    let p6 = parse_packet_line("[[6]]".as_bytes());
+    let decoder_key = items.into_iter()
+        .enumerate()
+        .filter(move |(_, packet)| { *packet == p2 || *packet == p6 })
+        .map(|(i, _)| {i + 1})
+        .product::<usize>();
+    println!("{}", decoder_key);
 }
