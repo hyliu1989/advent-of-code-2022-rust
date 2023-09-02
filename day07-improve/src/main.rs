@@ -34,7 +34,7 @@ impl Entry {
 
 // This is an example of impl used here that partially specify the generic type I of Peekable<I>.
 
-fn build_filesys_tree(data: &str) -> Entry {
+fn build_filesys_tree(data: &'static str) -> Entry {
     let mut lines = data.lines().peekable();
     // `lines` was previously a function parameter with type &mut Peekable<impl Iterator<Item = &'static str>>.
     // Equivalent function signatures
@@ -75,8 +75,8 @@ fn build_filesys_tree(data: &str) -> Entry {
     root
 }
 
-fn ls_populate<'a, I>(lines: &'a mut Peekable<I>, parent_folder: &Entry)
-where I: Iterator<Item = &'a str>
+fn ls_populate<I>(lines: &mut Peekable<I>, parent_folder: &Entry)
+where I: Iterator<Item = &'static str>
 {
     let mut parent_folder_map = parent_folder.get_map().unwrap().borrow_mut();
     while let Some(line) = lines.next_if(|&l| {l.chars().nth(0).unwrap() != '$'}) {
@@ -93,7 +93,7 @@ fn main() {
     part1(data);
 }
 
-fn part1(data: &str) {
+fn part1(data: &'static str) {
     let mut root = build_filesys_tree(data);
 
     // // Update the size of directories
