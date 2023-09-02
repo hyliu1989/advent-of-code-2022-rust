@@ -12,6 +12,8 @@ enum PacketData {
     Num(i32),
     List(Vec<PacketData>),
 }
+
+// Implementing the comparison order.
 impl Ord for PacketData {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
@@ -36,6 +38,9 @@ impl Ord for PacketData {
     }
 }
 
+// This is a boilerplate of impl PartialOrd when trait Ord is implemented, as can be found 
+// in the documentation of trait Ord.
+// https://doc.rust-lang.org/nightly/std/cmp/trait.Ord.html
 impl PartialOrd for PacketData {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
