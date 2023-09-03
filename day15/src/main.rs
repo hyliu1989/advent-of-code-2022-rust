@@ -2,8 +2,9 @@ use std::collections::HashSet;
 
 fn main() {
     let data = include_str!("../input.txt");
-    part1(data);
-    println!("Hello, world!");
+    // part1(data);
+    println!("=====");
+    part2(data);
 }
 
 fn sensor_beason_pairs(data: &str) -> Vec<(i64, i64, i64, i64)> {
@@ -63,4 +64,30 @@ fn part1(data: &str) {
         .count();
 
     println!("{}", position_count);
+}
+
+
+const QUESTION_CONST: usize = 4000000;
+fn part2(data: &str) {
+    let sb_pair_coords = sensor_beason_pairs(data);
+    for y_test in 0..=QUESTION_CONST {
+        let mut excluded_x = [true; QUESTION_CONST+1];
+        for (sx, sy, bx, by) in sb_pair_coords.iter() {
+            let dist = (sx.abs_diff(*bx) + sy.abs_diff(*by)) as i64;
+            let remaining_dist = dist - sy.abs_diff(y_test as i64) as i64;
+            if remaining_dist >= 0 {
+                let start = 0i64.max(sx - remaining_dist) as usize;
+                let end_inclusive = (QUESTION_CONST as i64).min(sx + remaining_dist) as usize;
+                excluded_x[start..=end_inclusive].fill(true);
+            }
+        }
+        let candidate: Vec<usize> = excluded_x.iter()
+            .enumerate()
+            .filter_map(|(i, excluded)| {
+                if *excluded { None } else { Some(i) }
+            }).collect();
+        if candidate.len() != 0 {
+            println!("x = {}, y = {}, freq={}", candidate[0], y_test, candidate[0] * QUESTION_CONST);
+        }
+    }
 }
