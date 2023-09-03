@@ -46,6 +46,8 @@ fn part1(data: &str) {
         }
     }
     let blocked_segments = blocked_segments;
+    let x_of_beacons_in_row = x_of_beacons_in_row;
+    println!("({}..={})", x_min, x_max);
 
     let position_count = (x_min..=x_max)
         .filter(|x| {
