@@ -33,7 +33,6 @@ impl Entry {
 
 
 // This is an example of impl used here that partially specify the generic type I of Peekable<I>.
-
 fn build_filesys_tree(data: &'static str) -> Entry {
     let mut lines = data.lines().peekable();
     // `lines` was previously a function parameter with type &mut Peekable<impl Iterator<Item = &'static str>>.
@@ -41,38 +40,48 @@ fn build_filesys_tree(data: &'static str) -> Entry {
     // - fn part1<I>(lines: &mut Peekable<I>) where I: Iterator<Item = &'static str>
     // - fn part1(lines: &mut Peekable<impl Iterator<Item = &'static str>>)
 
-    let root = Entry::new_dir();
-    let mut dir_trace: Vec<&Entry> = vec![&root];
+    let mut dir_trace: Vec<(&str, Entry)> = vec![("/", Entry::new_dir())];
+    let modify_and_pop = |trace: &mut Vec<(&str, Entry)>| {
+        if trace.len() > 1 {
+            let (name, popped_entry) = trace.pop().unwrap();
+            let parent_of_popped = &trace.last().unwrap().1.info;
+            match parent_of_popped {
+                EntryInfo::File => { panic!("trace should contain no File!"); },
+                EntryInfo::Directory(map) => {
+                    map.borrow_mut().insert(name.into(), popped_entry);
+                },
+            }
+        }
+    };
+
     while let Some(line) = lines.next() {
         match line {
             // Navigation.
-            "$ cd .." => {
-                if dir_trace.len() != 1 {
-                    dir_trace.pop();
-                }
-            },
+            "$ cd .." => { modify_and_pop(&mut dir_trace); },
             "$ cd /" => {
                 while dir_trace.len() != 1 {
-                    dir_trace.pop();
+                    modify_and_pop(&mut dir_trace);
                 }
             },
             command if &line[0..4] == "$ cd" => {
                 let folder_name = command.split_once("$ cd ").unwrap().1;
-
-                let curr_dir = *dir_trace.last().unwrap();
-                // let dest_dir = curr_dir.get_map().unwrap().borrow().get(folder_name).unwrap();
-                // dir_trace.push(dest_dir);
+                let curr_dir = &dir_trace.last().unwrap().1;
+                let dest_dir = curr_dir.get_map().unwrap().borrow_mut().remove(folder_name).unwrap();
+                dir_trace.push((folder_name, dest_dir));
             },
             // Populating.
             _ if &line[0..4] == "$ ls" => {
-                let parent_folder = *dir_trace.last().unwrap();
+                let parent_folder = &mut dir_trace.last_mut().unwrap().1;
                 ls_populate(&mut lines, parent_folder);
             },
             // Report unrecognized.
             unrecognized => { println!("unrecognized line ({})! ", unrecognized); },
         }
     }
-    root
+    while dir_trace.len() != 1 {
+        modify_and_pop(&mut dir_trace);
+    }
+    dir_trace.pop().unwrap().1
 }
 
 fn ls_populate<I>(lines: &mut Peekable<I>, parent_folder: &Entry)
