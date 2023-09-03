@@ -106,18 +106,17 @@ fn part1(data: &'static str) {
     let mut root = build_filesys_tree(data);
 
     // // Update the size of directories
-    // let mut dir_entries = dfs_populate_size(&mut root);
+    let dir_sizes = dfs_populate_size(&mut root);
 
-    // // Accumulate the total (repeated) size count of directories that are at most 100000.
-    // let accum = dir_entries.into_iter()
-    //     .filter_map(|en| {
-    //         let size = en.size.get();
-    //         if size <= 100000 { Some(size) } else { None }
-    //     })
-    //     .sum::<i64>();
-    // println!("{}", accum);
+    // Accumulate the total (repeated) size count of directories that are at most 100000.
+    let accum = dir_sizes.into_iter()
+        .filter_map(|size| {
+            if size <= 100000 { Some(size) } else { None }
+        })
+        .sum::<i64>();
+    println!("{}", accum);
 
-    // println!("============");
+    // 
     // let current_used_space = dir_trace[0].borrow().size.get();
     // let current_space = 70_000_000 - current_used_space;
 
@@ -132,24 +131,24 @@ fn part1(data: &'static str) {
 }
 
 
-/* Returns a Vec of references to directory Entry's. */
-// fn dfs_populate_size<'a>(dir_entry: &'a Entry) -> Vec<&'a Entry> {
-//     let mut accum_size = 0;
-//     let mut dir_entries: Vec<&'a Entry> = vec![];
+/* Returns a Vec of directory sizes. */
+fn dfs_populate_size(dir_entry: &Entry) -> Vec<i64> {
+    let mut accum_size = 0;
+    let mut dir_sizes: Vec<i64> = vec![];
     
-//     let mut map = dir_entry.get_map().unwrap().borrow_mut();
-//     for entry in map.values_mut() {
-//         match entry.info {
-//             EntryInfo::File => {},
-//             EntryInfo::Directory(_) => {
-//                 let mut subdir_entries = dfs_populate_size(entry);
-//                 dir_entries.append(&mut subdir_entries);
-//             },
-//         }
-//         accum_size += entry.size.get();
-//     }
+    let map = dir_entry.get_map().unwrap().borrow_mut();
+    for entry in map.values() {
+        match entry.info {
+            EntryInfo::File => {},
+            EntryInfo::Directory(_) => {
+                let mut subdir_sizes = dfs_populate_size(entry);
+                dir_sizes.append(&mut subdir_sizes);
+            },
+        }
+        accum_size += entry.size.get();
+    }
     
-//     dir_entry.size.set(accum_size);
-//     dir_entries.push(dir_entry);
-//     dir_entries
-// }
+    dir_entry.size.set(accum_size);
+    dir_sizes.push(accum_size);
+    dir_sizes
+}
