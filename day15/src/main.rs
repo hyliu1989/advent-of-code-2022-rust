@@ -29,45 +29,40 @@ fn part1(data: &str) {
     const Y_COORD_TO_TEST: i64 = 2000000;
     let sb_pair_coords = sensor_beason_pairs(data);
 
-    let (mut x_min, mut x_max) = (i64::MAX, i64::MIN);
-    let mut x_of_beacons_in_row: HashSet<i64> = HashSet::new();
-    let mut blocked_segments: Vec<(i64, i64)> = Vec::new();
-    for (sx, sy, bx, by) in sb_pair_coords {
-        let dist = (sx.abs_diff(bx) + sy.abs_diff(by)) as i64;
-        let remaining_dist = dist - sy.abs_diff(Y_COORD_TO_TEST) as i64;
-        if remaining_dist >= 0 {
-            let (start, end_inclusive) = (sx - remaining_dist, sx + remaining_dist);
-            x_min = x_min.min(start);
-            x_max = x_max.max(end_inclusive);
-            blocked_segments.push((start, end_inclusive));
-        }
-
-        if by == Y_COORD_TO_TEST {
-            x_of_beacons_in_row.insert(bx);
-        }
-    }
-    let blocked_segments = blocked_segments;
-    let x_of_beacons_in_row = x_of_beacons_in_row;
-    println!("({}..={})", x_min, x_max);
-
-    let position_count = (x_min..=x_max)
-        .filter(|x| {
-            if x_of_beacons_in_row.contains(x) {
-                false
+    let mut blocked_segments:VecDeque<(i64, i64)> = sb_pair_coords.iter()
+        .filter_map(|(sx, sy, bx, by)| {
+            let dist = (sx.abs_diff(*bx) + sy.abs_diff(*by)) as i64;
+            let remaining_dist = dist - sy.abs_diff(Y_COORD_TO_TEST) as i64;
+            if remaining_dist >= 0 {
+                let start = sx - remaining_dist;
+                let end_inclusive = sx + remaining_dist;
+                Some((start, end_inclusive))
             } else {
-                blocked_segments.iter()
-                    .any(|(start, end_inclusive)| {
-                        start <= x && x <= end_inclusive
-                    })
+                None
             }
         })
-        .count();
+        .collect();
 
-    println!("{}", position_count);
+    let x_of_beacons_in_row: HashSet<i64> = sb_pair_coords.iter()
+        .filter_map(|(_, _, bx, by)| {if *by == Y_COORD_TO_TEST { Some(*bx) } else { None }})
+        .collect();
+    
+    for bx in x_of_beacons_in_row.iter() {
+        blocked_segments.push_back((*bx, *bx));
+    }
+
+    let non_overlapping_segments = merge_segments(blocked_segments);
+
+    let num_blocked_positions: i64 = non_overlapping_segments.into_iter()
+        .map(|(start, end_inclusive)| { end_inclusive - start + 1 })
+        .sum::<i64>()
+        - (x_of_beacons_in_row.len() as i64);
+
+    println!("{}", num_blocked_positions);
 }
 
 
-fn merge_segment(segment1: (i64, i64), segment2: (i64, i64)) -> Option<(i64, i64)> {
+fn merge_segment_pair(segment1: (i64, i64), segment2: (i64, i64)) -> Option<(i64, i64)> {
     let (start1, end1) = segment1;
     let (start2, end2) = segment2;
 
@@ -82,11 +77,38 @@ fn merge_segment(segment1: (i64, i64), segment2: (i64, i64)) -> Option<(i64, i64
     }
 }
 
-const QUESTION_CONST: usize = 4000000;
+/* Returns a Vec of nonoverlapping segments. */
+fn merge_segments(mut segments: VecDeque<(i64, i64)>) -> Vec<(i64, i64)> {
+    let mut ret: Vec<(i64, i64)> = Vec::new();
+    while segments.len() != 0 {
+        let seg1 = segments.pop_front().unwrap();
+        let num_operation = segments.len();
+        let mut merged = false;
+        for _ in 0..num_operation {
+            let seg2 = segments.pop_front().unwrap();
+            match merge_segment_pair(seg1, seg2) {
+                Some(new_seg) => {
+                    merged = true;
+                    segments.push_back(new_seg);
+                },
+                None => {
+                    segments.push_back(seg2);
+                },
+            }
+        }
+        if !merged {
+            ret.push(seg1);
+        }
+    }
+    ret
+}
+
+
 fn part2(data: &str) {
+    const QUESTION_CONST: usize = 4000000;
     let sb_pair_coords = sensor_beason_pairs(data);
     for y_test in (0..=QUESTION_CONST).rev() {
-        let mut blocked_segments:VecDeque<(i64, i64)> = sb_pair_coords.iter()
+        let blocked_segments:VecDeque<(i64, i64)> = sb_pair_coords.iter()
             .filter_map(|(sx, sy, bx, by)| {
                 let dist = (sx.abs_diff(*bx) + sy.abs_diff(*by)) as i64;
                 let remaining_dist = dist - sy.abs_diff(y_test as i64) as i64;
@@ -99,34 +121,11 @@ fn part2(data: &str) {
                 }
             })
             .collect();
-        loop {
-            let ending_condition = blocked_segments.len() == 2;
-            let seg1 = blocked_segments.pop_front().unwrap();
-            let num_operation = blocked_segments.len();
-            let mut merged = false;
-            for _ in 0..num_operation {
-                let seg2 = blocked_segments.pop_front().unwrap();
-                match merge_segment(seg1, seg2) {
-                    Some(new_seg) => {
-                        merged = true;
-                        blocked_segments.push_back(new_seg);
-                    },
-                    None => {
-                        blocked_segments.push_back(seg2);
-                    },
-                }
-            }
-            if !merged {
-                blocked_segments.push_back(seg1);
-            }
-            if ending_condition {
-                break;
-            }
-        }
-        if blocked_segments.len() > 1 {
+        let non_overlapping_segments = merge_segments(blocked_segments);
+        if non_overlapping_segments.len() > 1 {
             let mut x_coord = 0i64;
             println!("Segments: ");
-            for seg in blocked_segments.iter() {
+            for seg in non_overlapping_segments.iter() {
                 println!("- ({}, {})", seg.0, seg.1);
                 if seg.0 == 0 {
                     x_coord = seg.1 + 1;
