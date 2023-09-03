@@ -99,14 +99,15 @@ where I: Iterator<Item = &'static str>
 
 fn main() {
     let data = include_str!("../input.txt");
-    part1(data);
+    let mut root = build_filesys_tree(data);
+    part1(&mut root);
+    println!("============");
+    part2(&mut root);
 }
 
-fn part1(data: &'static str) {
-    let mut root = build_filesys_tree(data);
-
+fn part1(root: &mut Entry) {
     // // Update the size of directories
-    let dir_sizes = dfs_populate_size(&mut root);
+    let dir_sizes = dfs_populate_size(root);
 
     // Accumulate the total (repeated) size count of directories that are at most 100000.
     let accum = dir_sizes.into_iter()
@@ -115,19 +116,19 @@ fn part1(data: &'static str) {
         })
         .sum::<i64>();
     println!("{}", accum);
+}
 
-    // 
-    // let current_used_space = dir_trace[0].borrow().size.get();
-    // let current_space = 70_000_000 - current_used_space;
+fn part2(root: &mut Entry) {
+    let current_used_space = root.size.get();
+    let current_space = 70_000_000 - current_used_space;
+    let mut dir_sizes = dfs_populate_size(root);
 
-    // dir_trace.sort_by_key(|a| { a.borrow().size.get() });
-    // for d in dir_trace {
-    //     let size = d.borrow().size.get();
-    //     if size >= 30000000 - current_space {
-    //         println!("part 2 {}", size);
-    //         break;
-    //     }
-    // }
+    dir_sizes.sort();
+    let size = dir_sizes.into_iter()
+        .filter(|size| *size >= (30000000 - current_space))
+        .nth(0)
+        .unwrap();
+    println!("part 2 {}", size);
 }
 
 
