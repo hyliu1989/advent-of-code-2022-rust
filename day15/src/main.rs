@@ -1,8 +1,8 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 fn main() {
     let data = include_str!("../input.txt");
-    // part1(data);
+    part1(data);
     println!("=====");
     part2(data);
 }
@@ -67,27 +67,74 @@ fn part1(data: &str) {
 }
 
 
+fn merge_segment(segment1: (i64, i64), segment2: (i64, i64)) -> Option<(i64, i64)> {
+    let (start1, end1) = segment1;
+    let (start2, end2) = segment2;
+
+    // Check if the segments overlap
+    if end1 >= start2 && end2 >= start1 {
+        // Calculate the merged segment
+        let merged_start = start1.min(start2);
+        let merged_end = end1.max(end2);
+        Some((merged_start, merged_end))
+    } else {
+        None
+    }
+}
+
 const QUESTION_CONST: usize = 4000000;
 fn part2(data: &str) {
     let sb_pair_coords = sensor_beason_pairs(data);
-    for y_test in 0..=QUESTION_CONST {
-        let mut excluded_x = [true; QUESTION_CONST+1];
-        for (sx, sy, bx, by) in sb_pair_coords.iter() {
-            let dist = (sx.abs_diff(*bx) + sy.abs_diff(*by)) as i64;
-            let remaining_dist = dist - sy.abs_diff(y_test as i64) as i64;
-            if remaining_dist >= 0 {
-                let start = 0i64.max(sx - remaining_dist) as usize;
-                let end_inclusive = (QUESTION_CONST as i64).min(sx + remaining_dist) as usize;
-                excluded_x[start..=end_inclusive].fill(true);
+    for y_test in (0..=QUESTION_CONST).rev() {
+        let mut blocked_segments:VecDeque<(i64, i64)> = sb_pair_coords.iter()
+            .filter_map(|(sx, sy, bx, by)| {
+                let dist = (sx.abs_diff(*bx) + sy.abs_diff(*by)) as i64;
+                let remaining_dist = dist - sy.abs_diff(y_test as i64) as i64;
+                if remaining_dist >= 0 {
+                    let start = 0i64.max(sx - remaining_dist);
+                    let end_inclusive = (QUESTION_CONST as i64).min(sx + remaining_dist);
+                    Some((start, end_inclusive))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        loop {
+            let ending_condition = blocked_segments.len() == 2;
+            let seg1 = blocked_segments.pop_front().unwrap();
+            let num_operation = blocked_segments.len();
+            let mut merged = false;
+            for _ in 0..num_operation {
+                let seg2 = blocked_segments.pop_front().unwrap();
+                match merge_segment(seg1, seg2) {
+                    Some(new_seg) => {
+                        merged = true;
+                        blocked_segments.push_back(new_seg);
+                    },
+                    None => {
+                        blocked_segments.push_back(seg2);
+                    },
+                }
+            }
+            if !merged {
+                blocked_segments.push_back(seg1);
+            }
+            if ending_condition {
+                break;
             }
         }
-        let candidate: Vec<usize> = excluded_x.iter()
-            .enumerate()
-            .filter_map(|(i, excluded)| {
-                if *excluded { None } else { Some(i) }
-            }).collect();
-        if candidate.len() != 0 {
-            println!("x = {}, y = {}, freq={}", candidate[0], y_test, candidate[0] * QUESTION_CONST);
+        if blocked_segments.len() > 1 {
+            let mut x_coord = 0i64;
+            println!("Segments: ");
+            for seg in blocked_segments.iter() {
+                println!("- ({}, {})", seg.0, seg.1);
+                if seg.0 == 0 {
+                    x_coord = seg.1 + 1;
+                }
+            }
+            let y_coord = y_test;
+            println!("x = {}, y = {}, freq = {}", x_coord, y_coord, (x_coord as usize) * QUESTION_CONST + y_coord);
+            break;
         }
     }
 }
