@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque, HashSet};
 use itertools::Itertools;
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 fn main() {
     /*
@@ -46,20 +46,21 @@ fn main() {
             println!("{:2?}", row);
         }
         println!("The pressure rates: {:?}", relavent_node_rate);
+
+        let one_result = open_volves(
+            &relavent_node_rate, 
+            &mutual_dist, 
+            // &([0, 3, 6, 1, 2, 4, 5].into()), 
+            &([0, 3, 1, 6, 5, 4, 2].into()), 
+            30, 
+            true,
+        );
+        println!("one result: {} {}", one_result.0, one_result.1);
     }
 
-    let one_result = open_volves(
-        &relavent_node_rate, 
-        &mutual_dist, 
-        // &([0, 3, 6, 1, 2, 4, 5].into()), 
-        &([0, 3, 1, 6, 5, 4, 2].into()), 
-        30, 
-        true,
-    );
-    println!("one result: {} {}", one_result.0, one_result.1);
     // find_best_volve_opening::<30>(&relavent_node_rate, &mutual_dist);
     find_best_volve_opening_2(&relavent_node_rate, &mutual_dist);
-    println!("Hello, world!");
+    println!("============");
 }
 
 
