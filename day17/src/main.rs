@@ -8,7 +8,8 @@ struct Rock {
 
 const DEBUG: bool = false;
 const WIDTH: usize = 7;
-
+const NUM_ROCKS: usize = 2022;  // part 1
+// const NUM_ROCKS: usize = 1000000000000;  // part 2
 
 fn main() {
     let rock_appearing_sequence = &[
@@ -92,7 +93,7 @@ fn main() {
             let rock_idx;
             (i, j) = (canvas.len() as i32 + 3, 2);
             (rock, rock_idx) = get_next_rock();
-            if rock_idx == 2022 {
+            if rock_idx == NUM_ROCKS {
                 break;
             }
             if DEBUG && rock_idx < 30 {
