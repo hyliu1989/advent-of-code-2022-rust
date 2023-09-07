@@ -82,69 +82,70 @@ fn main() {
         };
     }
 
-    let mut part1_canvas: Vec<[bool; WIDTH]> = Vec::new();
-    part1_canvas.push([true; WIDTH]);  // put the floor.
+    let mut canvas: Vec<[bool; WIDTH]> = Vec::new();
     let mut current_block_state: Option<(&Rock, i32, i8)> = None;
     for instruction in include_bytes!("../input.txt").into_iter().cycle() {
         let (rock, mut i, mut j);
         if let Some((rr, ii, jj)) = current_block_state {
-            (i, j) = (ii, jj);
-            rock = rr;
+            (i, j, rock) = (ii, jj, rr);
         } else {
             let rock_idx;
-            (i, j) = (part1_canvas.len() as i32 + 3, 2);
+            (i, j) = (canvas.len() as i32 + 3, 2);
             (rock, rock_idx) = get_next_rock();
             if rock_idx == 2022 {
                 break;
             }
+            if DEBUG && rock_idx < 30 {
+                print_canvas(&canvas);
+                println!("=============");
+            }
         }
         match instruction {
             b'>' => {
-                let passed = check_shift(&part1_canvas, &rock.check_right, i, j);
+                let passed = check_shift(&canvas, &rock.check_right, i, j);
                 if passed {
                     j += 1;
                 }
             },
             b'<' => {
-                let passed = check_shift(&part1_canvas, &rock.check_left, i, j);
+                let passed = check_shift(&canvas, &rock.check_left, i, j);
                 if passed {
                     j -= 1;
                 }
             },
             _ => { continue; }
         }
-        let passed = check_shift(&part1_canvas, &rock.check_down, i, j);
+        let passed = check_shift(&canvas, &rock.check_down, i, j);
         if passed {
             i -= 1;
             current_block_state = Some((rock, i, j));
         } else {
             for (rel_i, rel_j) in &rock.fill {
                 let row_idx = (i + (*rel_i as i32)) as usize;
-                while part1_canvas.len() <= row_idx {
-                    part1_canvas.push([false; WIDTH]);
+                while canvas.len() <= row_idx {
+                    canvas.push([false; WIDTH]);
                 }
-                part1_canvas[row_idx][(j + rel_j) as usize] = true;
+                canvas[row_idx][(j + rel_j) as usize] = true;
             }
             current_block_state = None;
         }
-        if DEBUG {
-            print_canvas(&part1_canvas);
-            println!("=============");
-        }
     }
-    println!("{}", part1_canvas.len() - 1);
+    println!("{}", canvas.len());
 }
 
 
 fn check_shift(canvas: &Vec<[bool; WIDTH]>, relative_coordinates: &Vec<(i8, i8)>, i: i32, j: i8) -> bool {
     let mut passed = true;
     for (rel_i, rel_j) in relative_coordinates {
-        let row_idx = (i + (*rel_i as i32)) as usize;
+        let row_idx = i + (*rel_i as i32);
+        if row_idx <= -1 {
+            return false;
+        }
         let col_idx = j + rel_j;
         if col_idx <= -1 || col_idx >= WIDTH as i8 {
             return false;
         }
-        if let Some(row) = canvas.get(row_idx) {
+        if let Some(row) = canvas.get(row_idx as usize) {
             let filled = row[col_idx as usize];
             if filled {
                 passed = false;
