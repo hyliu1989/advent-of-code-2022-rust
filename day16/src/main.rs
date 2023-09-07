@@ -234,20 +234,21 @@ fn find_best_volve_opening_2(volve_rate: &Vec<i32>, volve_distances: &Vec<Vec<i3
     let mut cache = HashMap::new();
     println!(
         "{} (cache size {})",
-        find_next_volve(0u16, 0, 30, volve_rate, volve_distances, &mut cache),
+        find_next_volve_subset(0u16, 0, 30, volve_rate, volve_distances, &mut cache, 0xffff),
         cache.len(),
 
     );
 }
 
 
-fn find_next_volve(
+fn find_next_volve_subset(
     mut opened_volve: u16,
     next_volve: usize,
     mut remaining_turns: i32,
     volve_rate: &Vec<i32>,
     volve_distances: &Vec<Vec<i32>>,
     cache: &mut HashMap<(u16, usize, i32), i32>,
+    subset: u16,
 ) -> i32 {
     let k = &(opened_volve, next_volve, remaining_turns);
     if let Some(score) = cache.get(k) {
@@ -262,7 +263,14 @@ fn find_next_volve(
 
     let mut max_pressure = 0i32;
     for next_volve in 0..volve_rate.len() {
-        if (opened_volve & (1u16 << next_volve)) != 0 {
+        let next_volve_mask = 1u16 << next_volve;
+        if (subset & next_volve_mask) == 0 {
+            // Not in subset. Abort.
+            continue;
+        }
+
+        if (opened_volve & next_volve_mask) != 0 {
+            // Already opened. Abort.
             continue;
         }
         let local_remaining_turns = remaining_turns - volve_distances[curr_volve][next_volve];
@@ -270,7 +278,9 @@ fn find_next_volve(
             continue;
         }
         max_pressure = max_pressure.max(
-            find_next_volve(opened_volve, next_volve, local_remaining_turns, volve_rate, volve_distances, cache)
+            find_next_volve_subset(
+                opened_volve, next_volve, local_remaining_turns, volve_rate, volve_distances, cache, subset
+            )
         );
     }
     cache.insert(*k, total_pressure_by_curr + max_pressure);
