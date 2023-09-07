@@ -61,6 +61,34 @@ fn main() {
     // find_best_volve_opening::<30>(&relavent_node_rate, &mutual_dist);
     find_best_volve_opening_2(&relavent_node_rate, &mutual_dist);
     println!("============");
+    const TURN_LIMIT_2: i32 = 26;
+    let mut max_score = 0i32;
+    for num_mine in 1..7 {
+        for combination_selection in (1usize..16).into_iter().combinations(num_mine) {
+            let me_subset = make_selection_volve_mask(&combination_selection) | 0x0001;
+            let element_subset = (!me_subset) | 0x0001;
+            let score = 
+                find_next_volve_subset(
+                    0u16,
+                    0,
+                    TURN_LIMIT_2,
+                    &relavent_node_rate,
+                    &mutual_dist,
+                    &mut HashMap::new(),
+                    me_subset,
+                ) + find_next_volve_subset(
+                    0u16,
+                    0,
+                    TURN_LIMIT_2,
+                    &relavent_node_rate,
+                    &mutual_dist,
+                    &mut HashMap::new(),
+                    element_subset,
+                );
+            max_score = max_score.max(score);
+        }
+    }
+    println!("{}", max_score)
 }
 
 
@@ -231,11 +259,12 @@ fn find_best_volve_opening<const TURN_LIMIT: i32>(volve_rate: &Vec<i32>, volve_d
 
 
 fn find_best_volve_opening_2(volve_rate: &Vec<i32>, volve_distances: &Vec<Vec<i32>>) {
+    const TURN_LIMIT: i32 = 30;
     assert!(volve_rate.len() <= 16);
     let mut cache = HashMap::new();
     println!(
         "{} (cache size {})",
-        find_next_volve_subset(0u16, 0, 30, volve_rate, volve_distances, &mut cache, 0xffff),
+        find_next_volve_subset(0u16, 0, TURN_LIMIT, volve_rate, volve_distances, &mut cache, 0xffff),
         cache.len(),
 
     );
@@ -286,4 +315,8 @@ fn find_next_volve_subset(
     }
     cache.insert(*k, total_pressure_by_curr + max_pressure);
     total_pressure_by_curr + max_pressure
+}
+
+fn make_selection_volve_mask(volves: &Vec<usize>) -> u16 {
+    volves.into_iter().map(|v| {1u16 << v}).sum()
 }
