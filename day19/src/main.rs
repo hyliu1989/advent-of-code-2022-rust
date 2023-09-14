@@ -3,7 +3,7 @@ fn main() {
     let blue_prints = parse_input(data);
     part1(&blue_prints);
     println!("Hello, world!");
-    println!("{:#?}", blue_prints);
+    part2(&blue_prints);
 }
 
 #[derive(Debug)]
@@ -83,6 +83,27 @@ fn part1(blueprints: &Vec<BluePrint>) {
         total_quality_level += geode_max as u32 * bp.id as u32;
     }
     println!("{}", total_quality_level);
+}
+
+fn part2(blueprints: &Vec<BluePrint>) {
+    let mut prod: u32 = 1;
+    for (i, bp) in blueprints.into_iter().enumerate() {
+        if i == 3 {
+            break;
+        }
+        let mut geode_max: u16 = search_next::<32>(
+            bp,
+            State { time: 0, ore: 0, clay: 0, obsidian: 0, geode: 0, ore_bot: 1, clay_bot: 0, obsidian_bot: 0, geode_bot: 0 },
+            RobotType::Ore,
+        );
+        geode_max = geode_max.max(search_next::<32>(
+            bp,
+            State { time: 0, ore: 0, clay: 0, obsidian: 0, geode: 0, ore_bot: 1, clay_bot: 0, obsidian_bot: 0, geode_bot: 0 },
+            RobotType::Clay,
+        ));
+        prod *= geode_max as u32;
+    }
+    println!("{}", prod);
 }
 
 fn search_next<const MAX_TIME: u16>(blueprint: &BluePrint, mut state: State, robot_next: RobotType) -> u16 {
