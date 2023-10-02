@@ -93,7 +93,7 @@ fn mix(order: &Vec<Rc<RefCell<LinkedList>>>, multiplier: i64) {
     }
 }
 
-const CASE: u8 = 0;
+const CASE: u8 = 1;
 
 fn main() {
     let data = include_str!("../input.txt");
@@ -118,23 +118,27 @@ fn main() {
     let order = order;
     let element_zero = element_zero.unwrap();
     
+    let multiplier: i64;
     if CASE == 0 {
-        // Start moving
-        mix(&order, 1);
-
-        // Collecting info
-        let mut cursor = element_zero;
-        let mut ret = 0;
-        for i in 1..=3000 {
-            let next_ = Rc::clone(cursor.borrow().next.as_ref().unwrap());
-            cursor = next_;
-            if i == 1000 || i == 2000 || i == 3000 {
-                ret += cursor.borrow().data;
-                println!("=*= {}", cursor.borrow().data);
-            }
-        }
-        println!("{}", ret);
+        multiplier = 1;
+        mix(&order, multiplier);
     } else {
-        let decryption_key = 811589153;
+        multiplier = 811589153;
+        for _ in 0..10 {
+            mix(&order, multiplier);
+        }
     }
+
+    // Collecting info
+    let mut cursor = element_zero;
+    let mut ret = 0i64;
+    for i in 1..=3000 {
+        let next_ = Rc::clone(cursor.borrow().next.as_ref().unwrap());
+        cursor = next_;
+        if i == 1000 || i == 2000 || i == 3000 {
+            ret += cursor.borrow().data as i64 * multiplier;
+            println!("=*= {}", cursor.borrow().data);
+        }
+    }
+    println!("{}", ret);
 }
