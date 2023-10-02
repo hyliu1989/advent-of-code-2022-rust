@@ -9,7 +9,7 @@ struct LinkedList {
 
 fn clone_option<T>(option: &Option<Rc<T>>) -> Option<Rc<T>> {
     match option {
-        Some(inner) => Some(inner.clone()),
+        Some(inner) => Some(Rc::clone(inner)),
         None => None,
     }
 }
@@ -20,7 +20,7 @@ Panicks if
 - the item to insert has front/prev connection.
 - the item to insert has back/next connection and `node` also has back/next connection.
 */
-fn insert_back(node: Rc<RefCell<LinkedList>>, new_next: Rc<RefCell<LinkedList>>) {
+fn insert_back(node: &Rc<RefCell<LinkedList>>, new_next: &Rc<RefCell<LinkedList>>) {
     if let Some(_) = new_next.borrow().prev {
         panic!("The item to be append has another front connection.");
     }
@@ -32,18 +32,17 @@ fn insert_back(node: Rc<RefCell<LinkedList>>, new_next: Rc<RefCell<LinkedList>>)
 
     let item0 = node;
     let item1 = new_next;
-    let item2_option;
-    item2_option = clone_option(&item0.borrow().next);
+    let item2_option = clone_option(&item0.borrow().next);
 
     // Connect 0 and 1
-    item0.borrow_mut().next = Some(item1.clone());
-    item1.borrow_mut().prev = Some(item0.clone());
+    item0.borrow_mut().next = Some(Rc::clone(item1));
+    item1.borrow_mut().prev = Some(Rc::clone(item0));
     // Try to connect 1 and 2 if needed.
-    match item2_option {
+    match item2_option.as_ref() {
         Some(item2) => {
             // Connect 1 and 2
-            item1.borrow_mut().next = Some(item2.clone());
-            item2.borrow_mut().prev = Some(item1.clone());
+            item1.borrow_mut().next = Some(Rc::clone(item2));
+            item2.borrow_mut().prev = Some(Rc::clone(item1));
         },
         None => {
             // Do nothing and use the existing .next of item1.
@@ -78,51 +77,50 @@ fn main() {
             LinkedList { data: num, next: None, prev: None }
         ));
         if let Some(last_) = order.last() {
-            insert_back(last_.clone(), curr.clone());
+            insert_back(last_, &curr);
         }
         if num == 0 {
-            element_zero = Some(curr.clone());
+            element_zero = Some(Rc::clone(&curr));
         }
         order.push(curr);
     }
     if let Some(last_) = order.last() {
-        insert_back(last_.clone(), order[0].clone());
+        insert_back(last_, &order[0]);
     }
     let order = order;
     let element_zero = element_zero.unwrap();
     
     // Start moving
     for element in order {
-        let moves = element.borrow().data.clone();
-        if moves == 0 {
+        let num_moves = element.borrow().data.clone();
+        if num_moves == 0 {
             continue;
         }
-        let get_moved_1 = if moves > 0 {
+        let get_moved_1 = if num_moves > 0 {
             |cursor: &Rc<RefCell<LinkedList>>| {
-                cursor.borrow().next.as_ref().unwrap().clone()
+                Rc::clone(cursor.borrow().next.as_ref().unwrap())
             }
         } else {
             |cursor: &Rc<RefCell<LinkedList>>| {
-                cursor.borrow().prev.as_ref().unwrap().clone()
+                Rc::clone(cursor.borrow().prev.as_ref().unwrap())
             }
         };
-        let mut cursor = element.borrow().prev.as_ref().unwrap().clone();
+        // Let `cursor` represent where to back insert the `element`.
+        let mut cursor = Rc::clone(element.borrow().prev.as_ref().unwrap());
         remove(&element);
-        for _ in 0..moves.abs() {
-            cursor = get_moved_1(&cursor.clone());
+        for _ in 0..num_moves.abs() {
+            cursor = get_moved_1(&cursor);
         }
-        // Destination is cursor.next
-        if cursor.borrow().next.as_ref().unwrap().borrow().data != element.borrow().data {
-            insert_back(cursor, element);
-        }
+        // Back-insert the element.
+        insert_back(&cursor, &element);
     }
     
     // Debug
     {
-        let mut cursor = element_zero.clone();
+        let mut cursor = Rc::clone(&element_zero);
         println!("++{}", cursor.borrow().data);
         for _ in 1..6 {
-            let to_assign = cursor.borrow().next.as_ref().unwrap().clone();
+            let to_assign = Rc::clone(cursor.borrow().next.as_ref().unwrap());
             cursor = to_assign;
             println!("++{}", cursor.borrow().data);
         }
@@ -132,7 +130,7 @@ fn main() {
     let mut cursor = element_zero;
     let mut ret = 0;
     for i in 1..=3000 {
-        let next_ = cursor.borrow().next.as_ref().unwrap().clone();
+        let next_ = Rc::clone(cursor.borrow().next.as_ref().unwrap());
         cursor = next_;
         if i == 1000 || i == 2000 || i == 3000 {
             ret += cursor.borrow().data;
