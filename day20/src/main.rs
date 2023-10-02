@@ -115,16 +115,16 @@ fn main() {
         insert_back(&cursor, &element);
     }
     
-    // Debug
-    {
-        let mut cursor = Rc::clone(&element_zero);
-        println!("++{}", cursor.borrow().data);
-        for _ in 1..6 {
-            let to_assign = Rc::clone(cursor.borrow().next.as_ref().unwrap());
-            cursor = to_assign;
-            println!("++{}", cursor.borrow().data);
-        }
-    }
+    // // Debug
+    // {
+    //     let mut cursor = Rc::clone(&element_zero);
+    //     println!("++{}", cursor.borrow().data);
+    //     for _ in 1..6 {
+    //         let to_assign = Rc::clone(cursor.borrow().next.as_ref().unwrap());
+    //         cursor = to_assign;
+    //         println!("++{}", cursor.borrow().data);
+    //     }
+    // }
 
     // Collecting info
     let mut cursor = element_zero;
