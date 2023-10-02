@@ -67,6 +67,34 @@ fn remove(node: &Rc<RefCell<LinkedList>>) {
 }
 
 
+fn mix(order: &Vec<Rc<RefCell<LinkedList>>>, multiplier: i64) {
+    for element in order.iter() {
+        let mut num_moves = element.borrow().data.clone() as i64;
+        if num_moves == 0 {
+            continue;
+        }
+        num_moves =(num_moves * multiplier) % (order.len() as i64 - 1);
+        if num_moves < 0 {
+            num_moves += order.len() as i64 - 1;
+        }
+        assert!(num_moves >= 0);
+
+        let get_moved_1 = |cursor: &Rc<RefCell<LinkedList>>| {
+            Rc::clone(cursor.borrow().next.as_ref().unwrap())
+        };
+        // Let `cursor` represent where to back insert the `element`.
+        let mut cursor = Rc::clone(element.borrow().prev.as_ref().unwrap());
+        remove(element);
+        for _ in 0..num_moves.abs() {
+            cursor = get_moved_1(&cursor);
+        }
+        // Back-insert the element.
+        insert_back(&cursor, element);
+    }
+}
+
+const CASE: u8 = 0;
+
 fn main() {
     let data = include_str!("../input.txt");
     let mut order: Vec<Rc<RefCell<LinkedList>>> = Vec::new();
@@ -90,52 +118,23 @@ fn main() {
     let order = order;
     let element_zero = element_zero.unwrap();
     
-    // Start moving
-    for element in order {
-        let num_moves = element.borrow().data.clone();
-        if num_moves == 0 {
-            continue;
-        }
-        let get_moved_1 = if num_moves > 0 {
-            |cursor: &Rc<RefCell<LinkedList>>| {
-                Rc::clone(cursor.borrow().next.as_ref().unwrap())
-            }
-        } else {
-            |cursor: &Rc<RefCell<LinkedList>>| {
-                Rc::clone(cursor.borrow().prev.as_ref().unwrap())
-            }
-        };
-        // Let `cursor` represent where to back insert the `element`.
-        let mut cursor = Rc::clone(element.borrow().prev.as_ref().unwrap());
-        remove(&element);
-        for _ in 0..num_moves.abs() {
-            cursor = get_moved_1(&cursor);
-        }
-        // Back-insert the element.
-        insert_back(&cursor, &element);
-    }
-    
-    // // Debug
-    // {
-    //     let mut cursor = Rc::clone(&element_zero);
-    //     println!("++{}", cursor.borrow().data);
-    //     for _ in 1..6 {
-    //         let to_assign = Rc::clone(cursor.borrow().next.as_ref().unwrap());
-    //         cursor = to_assign;
-    //         println!("++{}", cursor.borrow().data);
-    //     }
-    // }
+    if CASE == 0 {
+        // Start moving
+        mix(&order, 1);
 
-    // Collecting info
-    let mut cursor = element_zero;
-    let mut ret = 0;
-    for i in 1..=3000 {
-        let next_ = Rc::clone(cursor.borrow().next.as_ref().unwrap());
-        cursor = next_;
-        if i == 1000 || i == 2000 || i == 3000 {
-            ret += cursor.borrow().data;
-            println!("=*= {}", cursor.borrow().data);
+        // Collecting info
+        let mut cursor = element_zero;
+        let mut ret = 0;
+        for i in 1..=3000 {
+            let next_ = Rc::clone(cursor.borrow().next.as_ref().unwrap());
+            cursor = next_;
+            if i == 1000 || i == 2000 || i == 3000 {
+                ret += cursor.borrow().data;
+                println!("=*= {}", cursor.borrow().data);
+            }
         }
+        println!("{}", ret);
+    } else {
+        let decryption_key = 811589153;
     }
-    println!("{}", ret);
 }
