@@ -61,5 +61,35 @@ fn main() {
             *monkey.borrow_mut() = Monkey::Operation { first_operand, operator, second_operand };
         }
     }
-    println!("{}", eval(monkeys_map.get("root").unwrap(), &monkeys_map))
+    println!("{}", eval(monkeys_map.get("root").unwrap(), &monkeys_map));
+
+    // part 2
+    println!("part 2");
+    if let Some(root) = monkeys_map.get("root") {
+        let new_root;
+        match &*root.borrow() {
+            Monkey::Operation { first_operand, operator: _, second_operand } => {
+                new_root = Monkey::Operation {
+                    first_operand: first_operand.clone(),
+                    operator: "-".to_string(),
+                    second_operand: second_operand.clone(),
+                };
+            },
+            _ => { unreachable!(); }
+        }
+        *root.borrow_mut() = new_root;
+    } else {
+        unreachable!();
+    }
+    for value in 0..500000i64 {
+        if let Some(humn) = monkeys_map.get("humn") {
+            *humn.borrow_mut() = Monkey::Evaluated(value);
+        } else {
+            unreachable!();
+        }
+        if eval(monkeys_map.get("root").unwrap(), &monkeys_map) == 0 {
+            println!("{}", value);
+            break;
+        }
+    }
 }
