@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::cell::RefCell;
-
+extern crate num;
+use num::integer::{gcd, lcm};
 
 enum Monkey {
     Evaluated(i64),
@@ -39,6 +40,101 @@ fn eval(monkey: &RefCell<Monkey>, monkeys_map: &HashMap<String, RefCell<Monkey>>
     }
 }
 
+/* c0 + c1 * humn */
+#[derive(Copy, Clone)]
+struct Formula {
+    c0_num: i64,
+    c0_den: i64,
+    c1_num: i64,
+    c1_den: i64,
+}
+
+impl Formula {
+    fn neg(&self) -> Formula {
+        Formula { 
+            c0_num: -self.c0_num,
+            c0_den: self.c0_den,
+            c1_num: -self.c1_num,
+            c1_den: self.c1_den,
+        }
+    }
+    fn add(&self, other: &Formula) -> Formula {
+        let c0_den = lcm(self.c0_den, other.c0_den);
+        let c0_num = self.c0_num * (c0_den / self.c0_den)
+                          + other.c0_num * (c0_den / other.c0_den);
+        let c1_den = lcm(self.c1_den, other.c1_den);
+        let c1_num = self.c1_num * (c1_den / self.c1_den)
+                          + other.c1_num * (c1_den / other.c1_den);
+        Formula { c0_num, c0_den, c1_num, c1_den }
+    }
+    fn subtract(&self, other: &Formula) -> Formula {
+        self.add(&other.neg())
+    }
+    fn multiply(&self, other: &Formula) -> Formula {
+        assert!(self.c1_num == 0 || other.c1_num == 0);
+        let mut c0_num = self.c0_num * other.c0_num;
+        let mut c0_den = self.c0_den * other.c0_den;
+        let (mut c1_num, mut c1_den);
+        if self.c1_num == 0 {
+            c1_num = self.c0_num * other.c1_num;
+            c1_den = self.c0_den * other.c1_den;
+        } else {
+            c1_num = self.c1_num * other.c0_num;
+            c1_den = self.c1_den * other.c0_den;
+        }
+        let gcd0 = gcd(c0_den, c0_num);
+        c0_den /= gcd0;
+        c0_num /= gcd0;
+        let gcd1 = gcd(c1_den, c1_num);
+        c1_den /= gcd1;
+        c1_num /= gcd1;
+        Formula { c0_num, c0_den, c1_num, c1_den }
+    }
+    fn reverse(&self) -> Formula {
+        assert!(self.c1_num == 0);
+        Formula { c0_num:self. c0_den, c0_den: self.c0_num, c1_num: 0, c1_den: 1 }
+    }
+    fn divide(&self, other: &Formula) -> Formula {
+        self.multiply(&other.reverse())
+    }
+}
+
+fn is_humn(name: &str) -> Option<Formula> {
+    match name {
+        "humn" => { Some(Formula { c0_num: 0, c0_den: 1, c1_num: 1, c1_den: 1 }) },
+        _ => { None },
+    }
+}
+
+fn get_formula(monkey: &Monkey, monkeys_map: &HashMap<String, RefCell<Monkey>>) -> Formula {
+    match monkey {
+        Monkey::Evaluated(value) => {
+            Formula {c0_num: *value, c0_den: 1, c1_num: 0, c1_den: 1}
+        }
+        Monkey::Operation { first_operand, operator, second_operand } => {
+            let (f1, f2): (Formula, Formula);
+            if let Some(special) = is_humn(first_operand.as_str()) {
+                f1 = special;
+            } else {
+                f1 = get_formula(&*monkeys_map.get(first_operand).unwrap().borrow(), monkeys_map);
+            }
+            if let Some(special) = is_humn(second_operand.as_str()) {
+                f2 = special;
+            } else {
+                f2 = get_formula(&*monkeys_map.get(second_operand).unwrap().borrow(), monkeys_map);
+            }
+
+            match operator.as_str() {
+                "+" => f1.add(&f2),
+                "-" => f1.subtract(&f2),
+                "*" => f1.multiply(&f2),
+                "/"|_ => f1.divide(&f2),
+            }
+        }
+        _ => { unreachable!(); }
+    }
+}
+
 
 fn main() {
     println!("Hello, world!");
@@ -65,6 +161,7 @@ fn main() {
 
     // part 2
     println!("part 2");
+    // Replace the operation of root to be subtraction.
     if let Some(root) = monkeys_map.get("root") {
         let new_root;
         match &*root.borrow() {
@@ -81,15 +178,7 @@ fn main() {
     } else {
         unreachable!();
     }
-    for value in 0..500000i64 {
-        if let Some(humn) = monkeys_map.get("humn") {
-            *humn.borrow_mut() = Monkey::Evaluated(value);
-        } else {
-            unreachable!();
-        }
-        if eval(monkeys_map.get("root").unwrap(), &monkeys_map) == 0 {
-            println!("{}", value);
-            break;
-        }
-    }
+    let root_formula = get_formula(&*monkeys_map.get("root").unwrap().borrow(), &monkeys_map);
+    println!("{}/{} + {}/{} * h", root_formula.c0_num, root_formula.c0_den, root_formula.c1_num, root_formula.c1_den);
+    println!("h = {}", -root_formula.c0_num * root_formula.c1_den / root_formula.c0_den / root_formula.c1_num);
 }
