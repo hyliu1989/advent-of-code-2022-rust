@@ -40,23 +40,26 @@ fn main() {
     // Get the map size.
     let (m, n): (usize, usize);
     {
-        let mut iter = data.split(|b| *b == b'\n');
-        n = iter.next().unwrap().len();
-        let mut counts = 1;
         let mut encountered_empty_line = false;
-        for line in iter {
-            if line.len() == 0 {
-                encountered_empty_line = true;
-            }
-            if !encountered_empty_line {    
-                counts += 1;
-            }
-            if encountered_empty_line && line.len() != 0 {
-                instructions = Some(line);
-                break;
-            }
-        }
-        m = counts;
+        let mut line_len_max: i32 = 0;
+        m = data
+            .split(|b| *b == b'\n')
+            .filter_map(move |l| {
+                encountered_empty_line |= l.len() == 0;
+                if encountered_empty_line { None } else { Some(l) }
+            })
+            .map(|l| { line_len_max = std::cmp::max(line_len_max, l.len() as i32); }) // side effect used!
+            .count();
+        n = line_len_max as usize;
+
+        let mut encountered_empty_line = false;
+        data
+            .split(|b| *b == b'\n')
+            .filter_map(move |l| {
+                encountered_empty_line |= l.len() == 0;
+                if encountered_empty_line && l.len() != 0 { Some(l) } else { None }
+            })
+            .for_each(|l| { instructions = Some(l); });
     }
 
     let mut map = ndarray::Array2::<u8>::zeros((m, n));
