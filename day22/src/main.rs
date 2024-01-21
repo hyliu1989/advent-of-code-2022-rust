@@ -62,7 +62,7 @@ fn main() {
             .for_each(|l| { instructions = Some(l); });
     }
 
-    let mut map = ndarray::Array2::<u8>::zeros((m, n));
+    let mut map = ndarray::Array2::<u8>::zeros((m+2, n+2));
     let mut start_pos = None;
     for (i, line) in data.split(|b| *b == b'\n').enumerate() {
         if line.len() == 0 {
@@ -73,7 +73,7 @@ fn main() {
                 match c {
                     b' ' | b'#' => {},
                     b'.' => {
-                        start_pos = Some((i, j));
+                        start_pos = Some((i+1, j+1));
                         break;
                     },
                     _ => { unreachable!(); }
@@ -81,7 +81,7 @@ fn main() {
             }
         }
         for (j, c) in line.iter().enumerate() {
-            map[[i, j]] = match c {
+            map[[i+1, j+1]] = match c {
                 b' ' => 0,
                 b'#' | b'.' => *c,
                 _ => { unreachable!(); }
@@ -107,9 +107,9 @@ fn main() {
                     let mut next_i: i32 = pos_i as i32 + delta_i;
                     let mut next_j: i32 = pos_j as i32 + delta_j;
 
-                    let fall_off_edge = 
-                        next_i < 0 || next_i >= m as i32 || next_j < 0 || next_j >= n as i32 
-                        || map[[next_i as usize, next_j as usize]] == 0;
+                    let error_happen = next_i < 0 || next_i >= (m + 2) as i32 || next_j < 0 || next_j >= (n + 2) as i32;
+                    assert!(!error_happen);
+                    let fall_off_edge = map[[next_i as usize, next_j as usize]] == 0;
                     if fall_off_edge {
                         if delta_i != 0 {
                             next_i = if delta_i == 1 { 0 } else { m as i32 - 1 };
@@ -137,5 +137,5 @@ fn main() {
             },
         }
     }
-    println!("{} {} {} {}", pos_i, pos_j, dir, 1000 * (pos_i as i32 + 1) + 4 * (pos_j as i32 + 1) + dir as i32);
+    println!("{} {} {} {}", pos_i, pos_j, dir, 1000 * (pos_i as i32) + 4 * (pos_j as i32) + (dir as i32));
 }
