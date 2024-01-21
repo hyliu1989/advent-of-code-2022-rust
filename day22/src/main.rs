@@ -83,8 +83,7 @@ fn main() {
         for (j, c) in line.iter().enumerate() {
             map[[i, j]] = match c {
                 b' ' => 0,
-                b'#' => 1,
-                b'.' => 2,
+                b'#' | b'.' => *c,
                 _ => { unreachable!(); }
             };
         }
@@ -125,8 +124,8 @@ fn main() {
                         }
                     }
                     match map[[next_i as usize, next_j as usize]] {
-                        1 => { /* Hit the wall */ break; },
-                        2 => { /* Next is a valid tile */ },
+                        b'#' => { /* Hit the wall */ break; },
+                        b'.' => { /* Next is a valid tile */ },
                         _ => { unreachable!(); }
                     }
                     pos_i = next_i as usize;
