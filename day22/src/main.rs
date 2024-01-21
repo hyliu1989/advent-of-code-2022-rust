@@ -32,6 +32,49 @@ fn parse_instruction(instructions: &[u8]) -> Vec<Inst> {
     ret
 }
 
+fn task_move(map: &ndarray::Array2<u8>, current_pos: (usize, usize), dir: i8, steps: usize) -> (usize, usize) {
+    let (m, n) = map.dim();
+    let (mut pos_i, mut pos_j) = current_pos;
+    let (delta_i, delta_j) = match dir {
+        0 => (0, 1),
+        1 => (1, 0),
+        2 => (0, -1),
+        3 => (-1, 0),
+        _ => { unreachable!(); }
+    };
+
+    for _ in 0..steps {
+        let mut next_i: i32 = pos_i as i32 + delta_i;
+        let mut next_j: i32 = pos_j as i32 + delta_j;
+
+        let error_happen = next_i < 0 || next_i >= m as i32 || next_j < 0 || next_j >= n as i32;
+        assert!(!error_happen);
+        let fall_off_edge = map[[next_i as usize, next_j as usize]] == 0;
+        if fall_off_edge {
+            if delta_i != 0 {
+                next_i = if delta_i == 1 { 0 } else { m as i32 - 1 };
+                while map[[next_i as usize, next_j as usize]] == 0 {
+                    next_i += delta_i;
+                }
+            } else if delta_j != 0 {
+                next_j = if delta_j == 1 { 0 } else { n as i32 - 1 };
+                while map[[next_i as usize, next_j as usize]] == 0 {
+                    next_j += delta_j;
+                }
+            }
+        }
+        match map[[next_i as usize, next_j as usize]] {
+            b'#' => { /* Hit the wall */ break; },
+            b'.' => { /* Next is a valid tile */ },
+            _ => { unreachable!(); }
+        }
+        pos_i = next_i as usize;
+        pos_j = next_j as usize;
+    }
+
+    (pos_i, pos_j)
+}
+
 fn main() {
     println!("Hello, world!");
     let data = include_bytes!("../input.txt");
@@ -96,41 +139,7 @@ fn main() {
     for inst in instructions {
         match inst {
             Inst::Move(steps) => {
-                let (delta_i, delta_j) = match dir {
-                    0 => (0, 1),
-                    1 => (1, 0),
-                    2 => (0, -1),
-                    3 => (-1, 0),
-                    _ => { unreachable!(); }
-                };
-                for _ in 0..steps {
-                    let mut next_i: i32 = pos_i as i32 + delta_i;
-                    let mut next_j: i32 = pos_j as i32 + delta_j;
-
-                    let error_happen = next_i < 0 || next_i >= (m + 2) as i32 || next_j < 0 || next_j >= (n + 2) as i32;
-                    assert!(!error_happen);
-                    let fall_off_edge = map[[next_i as usize, next_j as usize]] == 0;
-                    if fall_off_edge {
-                        if delta_i != 0 {
-                            next_i = if delta_i == 1 { 0 } else { m as i32 + 1 };
-                            while map[[next_i as usize, next_j as usize]] == 0 {
-                                next_i += delta_i;
-                            }
-                        } else if delta_j != 0 {
-                            next_j = if delta_j == 1 { 0 } else { n as i32 + 1 };
-                            while map[[next_i as usize, next_j as usize]] == 0 {
-                                next_j += delta_j;
-                            }
-                        }
-                    }
-                    match map[[next_i as usize, next_j as usize]] {
-                        b'#' => { /* Hit the wall */ break; },
-                        b'.' => { /* Next is a valid tile */ },
-                        _ => { unreachable!(); }
-                    }
-                    pos_i = next_i as usize;
-                    pos_j = next_j as usize;
-                }
+                (pos_i, pos_j) = task_move(&map, (pos_i.clone(), pos_j.clone()), dir.clone(), steps);
             },
             Inst::Turn(turn) => {
                 dir = (dir + turn + 4) % 4;
