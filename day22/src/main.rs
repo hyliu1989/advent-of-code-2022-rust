@@ -112,12 +112,12 @@ fn main() {
                     let fall_off_edge = map[[next_i as usize, next_j as usize]] == 0;
                     if fall_off_edge {
                         if delta_i != 0 {
-                            next_i = if delta_i == 1 { 0 } else { m as i32 - 1 };
+                            next_i = if delta_i == 1 { 0 } else { m as i32 + 1 };
                             while map[[next_i as usize, next_j as usize]] == 0 {
                                 next_i += delta_i;
                             }
                         } else if delta_j != 0 {
-                            next_j = if delta_j == 1 { 0 } else { n as i32 - 1 };
+                            next_j = if delta_j == 1 { 0 } else { n as i32 + 1 };
                             while map[[next_i as usize, next_j as usize]] == 0 {
                                 next_j += delta_j;
                             }
