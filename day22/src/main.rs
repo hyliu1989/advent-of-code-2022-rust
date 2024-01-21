@@ -29,6 +29,9 @@ fn parse_instruction(instructions: &[u8]) -> Vec<Inst> {
             _ => { unreachable!(); }
         }
     }
+    if curr != 0 {
+        ret.push(Inst::Move(curr));
+    }
     ret
 }
 
@@ -47,6 +50,7 @@ fn task_move(map: &ndarray::Array2<u8>, current_pos: (usize, usize), dir: i8, st
         let mut next_i: i32 = pos_i as i32 + delta_i;
         let mut next_j: i32 = pos_j as i32 + delta_j;
 
+        // Padded map should not lead to next_i or next_j being out of boundary.
         let error_happen = next_i < 0 || next_i >= m as i32 || next_j < 0 || next_j >= n as i32;
         assert!(!error_happen);
         let fall_off_edge = map[[next_i as usize, next_j as usize]] == 0;
