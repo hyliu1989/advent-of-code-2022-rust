@@ -137,5 +137,5 @@ fn main() {
             },
         }
     }
-    println!("{} {} {} {}", pos_i, pos_j, dir, pos_i * 1000 + 4 * pos_j + dir as usize);
+    println!("{} {} {} {}", pos_i, pos_j, dir, 1000 * (pos_i as i32 + 1) + 4 * (pos_j as i32 + 1) + dir as i32);
 }
