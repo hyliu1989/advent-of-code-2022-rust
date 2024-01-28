@@ -67,7 +67,7 @@ fn fall_off_tranport_v1(map: &ndarray::Array2<u8>, current_pos: (usize, usize), 
 }
 
 
-fn fall_off_tranport_v2(map: &ndarray::Array2<u8>, current_pos: (usize, usize), dir: i8) -> (i32, i32, i8) {
+fn fall_off_tranport_v2(_map: &ndarray::Array2<u8>, current_pos: (usize, usize), dir: i8) -> (i32, i32, i8) {
     /*
              B    F
           +----+----+
