@@ -316,7 +316,7 @@ fn main() {
     for inst in instructions {
         match inst {
             Inst::Move(steps) => {
-                (pos_i, pos_j, dir) = task_move(&map, (pos_i.clone(), pos_j.clone()), dir.clone(), steps, 1);
+                (pos_i, pos_j, dir) = task_move(&map, (pos_i.clone(), pos_j.clone()), dir.clone(), steps, 2);
             },
             Inst::Turn(turn) => {
                 dir = (dir + turn + 4) % 4;
