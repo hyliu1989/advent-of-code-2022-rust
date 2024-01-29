@@ -1,6 +1,6 @@
 extern crate ndarray;
 
-use ndarray::s;
+use ndarray::{s, Axis};
 
 #[derive(PartialEq)]
 enum MapMark {
@@ -184,5 +184,42 @@ fn main() {
 
         idx_case_start = (idx_case_start + 1) % 4;
     }
-    println!("{:?}", map)
+    
+    // Calculate the score
+    let map = map.mapv(|x| u32::from(x));  // astype(uint32)
+    let sum_row = map.sum_axis(Axis(0));
+    let sum_col = map.sum_axis(Axis(1));
+    let mut empty_cols: usize = 0;
+    let mut empty_rows: usize = 0;
+    for j in 0..n {
+        if sum_row[j] != 0 {
+            break;
+        }
+        empty_cols += 1;
+    }
+    for j in (0..n).rev() {
+        if sum_row[j] != 0 {
+            break;
+        }
+        empty_cols += 1;
+    }
+
+    for i in (0..m).rev() {
+        if sum_col[i] != 0 {
+            break;
+        };
+        empty_rows += 1;
+    }
+    for i in (0..m).rev() {
+        if sum_col[i] != 0 {
+            break;
+        };
+        empty_rows += 1;
+    }
+    let m_trimmed = m - empty_rows;
+    let n_trimmed = n - empty_cols;
+    let num_elves = sum_col.sum();
+    assert!(num_elves == sum_row.sum());
+    println!("{}", m_trimmed * n_trimmed - num_elves as usize);
+    
 }
