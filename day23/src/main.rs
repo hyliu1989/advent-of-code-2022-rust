@@ -83,8 +83,9 @@ fn main() {
     // let mut map2 = ndarray::Array2::<u8>::zeros((m+1, n+1));
     // map2.slice_mut(s![1.., 1..]).assign(&map);
 
+    let mut iter_count = 0;
     let mut idx_case_start = 0;
-    for _iter in 0..10 {
+    loop {
         if expand_w || expand_e || expand_n || expand_s {
             let m_new = m + if expand_n { 1 } else { 0 } + if expand_s { 1 } else { 0 };
             let n_new = n + if expand_w { 1 } else { 0 } + if expand_e { 1 } else { 0 };
@@ -183,43 +184,37 @@ fn main() {
         }
 
         idx_case_start = (idx_case_start + 1) % 4;
-    }
-    
-    // Calculate the score
-    let map = map.mapv(|x| u32::from(x));  // astype(uint32)
-    let sum_row = map.sum_axis(Axis(0));
-    let sum_col = map.sum_axis(Axis(1));
-    let mut empty_cols: usize = 0;
-    let mut empty_rows: usize = 0;
-    for j in 0..n {
-        if sum_row[j] != 0 {
-            break;
-        }
-        empty_cols += 1;
-    }
-    for j in (0..n).rev() {
-        if sum_row[j] != 0 {
-            break;
-        }
-        empty_cols += 1;
-    }
+        iter_count += 1;
 
-    for i in (0..m).rev() {
-        if sum_col[i] != 0 {
+        if iter_count == 10 {
+            // Calculate the score
+            let map = map.mapv(|x| u32::from(x));  // astype(uint32)
+            let sum_row = map.sum_axis(Axis(0));
+            let sum_col = map.sum_axis(Axis(1));
+            let mut empty_cols: usize = 0;
+            let mut empty_rows: usize = 0;
+            for j in 0..n {
+                if sum_row[j] != 0 { break; }
+                empty_cols += 1;
+            }
+            for j in (0..n).rev() {
+                if sum_row[j] != 0 { break; }
+                empty_cols += 1;
+            }
+            for i in (0..m).rev() {
+                if sum_col[i] != 0 { break; };
+                empty_rows += 1;
+            }
+            for i in (0..m).rev() {
+                if sum_col[i] != 0 { break; };
+                empty_rows += 1;
+            }
+            let m_trimmed = m - empty_rows;
+            let n_trimmed = n - empty_cols;
+            let num_elves = sum_col.sum();
+            assert!(num_elves == sum_row.sum());
+            println!("part1: {}", m_trimmed * n_trimmed - num_elves as usize);
             break;
-        };
-        empty_rows += 1;
+        }
     }
-    for i in (0..m).rev() {
-        if sum_col[i] != 0 {
-            break;
-        };
-        empty_rows += 1;
-    }
-    let m_trimmed = m - empty_rows;
-    let n_trimmed = n - empty_cols;
-    let num_elves = sum_col.sum();
-    assert!(num_elves == sum_row.sum());
-    println!("{}", m_trimmed * n_trimmed - num_elves as usize);
-    
 }
