@@ -117,34 +117,36 @@ fn main() {
                         && map[[i+1, j-1]] == 0 && map[[i, j-1]] == 0
                     {
                         // No need to move.
-                    } else { for k in 0..4 {
-                        let idx_case = (idx_case_start + k) % 4;
-                        if idx_case == 0 { // Check North
-                            if map[[i-1, j-1]] == 0 && map[[i-1, j]] == 0 && map[[i-1, j+1]] == 0 {
-                                loc_move_to = Some([i-1, j]);
-                                on_x_of_destinations = Some(MapMark::FromS);
-                                break;
-                            }
-                        } else if idx_case == 1 {  // Check South
-                            if map[[i+1, j-1]] == 0 && map[[i+1, j]] == 0 && map[[i+1, j+1]] == 0 {
-                                loc_move_to = Some([i+1, j]);
-                                on_x_of_destinations = Some(MapMark::FromN);
-                                break;
-                            }
-                        } else if idx_case == 2 {  // Check West
-                            if map[[i-1, j-1]] == 0 && map[[i, j-1]] == 0 && map[[i+1, j-1]] == 0 {
-                                loc_move_to = Some([i, j-1]);
-                                on_x_of_destinations = Some(MapMark::FromE);
-                                break;
-                            }
-                        } else if idx_case == 3 {  // Check East
-                            if map[[i-1, j+1]] == 0 && map[[i, j+1]] == 0 && map[[i+1, j+1]] == 0 {
-                                loc_move_to = Some([i, j+1]);
-                                on_x_of_destinations = Some(MapMark::FromW);
-                                break;
+                    } else { 
+                        for k in 0..4 {
+                            let idx_case = (idx_case_start + k) % 4;
+                            if idx_case == 0 { // Check North
+                                if map[[i-1, j-1]] == 0 && map[[i-1, j]] == 0 && map[[i-1, j+1]] == 0 {
+                                    loc_move_to = Some([i-1, j]);
+                                    on_x_of_destinations = Some(MapMark::FromS);
+                                    break;
+                                }
+                            } else if idx_case == 1 {  // Check South
+                                if map[[i+1, j-1]] == 0 && map[[i+1, j]] == 0 && map[[i+1, j+1]] == 0 {
+                                    loc_move_to = Some([i+1, j]);
+                                    on_x_of_destinations = Some(MapMark::FromN);
+                                    break;
+                                }
+                            } else if idx_case == 2 {  // Check West
+                                if map[[i-1, j-1]] == 0 && map[[i, j-1]] == 0 && map[[i+1, j-1]] == 0 {
+                                    loc_move_to = Some([i, j-1]);
+                                    on_x_of_destinations = Some(MapMark::FromE);
+                                    break;
+                                }
+                            } else if idx_case == 3 {  // Check East
+                                if map[[i-1, j+1]] == 0 && map[[i, j+1]] == 0 && map[[i+1, j+1]] == 0 {
+                                    loc_move_to = Some([i, j+1]);
+                                    on_x_of_destinations = Some(MapMark::FromW);
+                                    break;
+                                }
                             }
                         }
-                    }}
+                    }
 
                     if let Some(loc_move_to) = loc_move_to {
                         // There is a place to move to.
