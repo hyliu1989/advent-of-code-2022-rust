@@ -104,6 +104,7 @@ fn main() {
 
         // map_next will mark the next position of the elf.
         // The mark will indicate where the elf moves from. See MapMark enum for details.
+        let mut no_one_moved = true;
         let mut map_next = ndarray::Array2::<u8>::zeros((m, n));
         for i in 0..m {
             for j in 0..n {
@@ -146,6 +147,7 @@ fn main() {
                                 }
                             }
                         }
+                        no_one_moved = false;
                     }
 
                     if let Some(loc_move_to) = loc_move_to {
@@ -188,6 +190,11 @@ fn main() {
         idx_case_start = (idx_case_start + 1) % 4;
         iter_count += 1;
 
+        if no_one_moved {
+            println!("part2: {}", iter_count);
+            break;
+        }
+
         if iter_count == 10 {
             // Calculate the score
             let map = map.mapv(|x| u32::from(x));  // astype(uint32)
@@ -216,7 +223,6 @@ fn main() {
             let num_elves = sum_col.sum();
             assert!(num_elves == sum_row.sum());
             println!("part1: {}", m_trimmed * n_trimmed - num_elves as usize);
-            break;
         }
     }
 }
