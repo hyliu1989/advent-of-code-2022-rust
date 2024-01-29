@@ -83,8 +83,9 @@ fn main() {
     // let mut map2 = ndarray::Array2::<u8>::zeros((m+1, n+1));
     // map2.slice_mut(s![1.., 1..]).assign(&map);
 
+    let mut iter_count = 0;
     let mut idx_case_start = 0;
-    for _iter in 0..10 {
+    loop {
         if expand_w || expand_e || expand_n || expand_s {
             let m_new = m + if expand_n { 1 } else { 0 } + if expand_s { 1 } else { 0 };
             let n_new = n + if expand_w { 1 } else { 0 } + if expand_e { 1 } else { 0 };
@@ -103,6 +104,7 @@ fn main() {
 
         // map_next will mark the next position of the elf.
         // The mark will indicate where the elf moves from. See MapMark enum for details.
+        let mut no_one_moved = true;
         let mut map_next = ndarray::Array2::<u8>::zeros((m, n));
         for i in 0..m {
             for j in 0..n {
@@ -116,34 +118,37 @@ fn main() {
                         && map[[i+1, j-1]] == 0 && map[[i, j-1]] == 0
                     {
                         // No need to move.
-                    } else { for k in 0..4 {
-                        let idx_case = (idx_case_start + k) % 4;
-                        if idx_case == 0 { // Check North
-                            if map[[i-1, j-1]] == 0 && map[[i-1, j]] == 0 && map[[i-1, j+1]] == 0 {
-                                loc_move_to = Some([i-1, j]);
-                                on_x_of_destinations = Some(MapMark::FromS);
-                                break;
-                            }
-                        } else if idx_case == 1 {  // Check South
-                            if map[[i+1, j-1]] == 0 && map[[i+1, j]] == 0 && map[[i+1, j+1]] == 0 {
-                                loc_move_to = Some([i+1, j]);
-                                on_x_of_destinations = Some(MapMark::FromN);
-                                break;
-                            }
-                        } else if idx_case == 2 {  // Check West
-                            if map[[i-1, j-1]] == 0 && map[[i, j-1]] == 0 && map[[i+1, j-1]] == 0 {
-                                loc_move_to = Some([i, j-1]);
-                                on_x_of_destinations = Some(MapMark::FromE);
-                                break;
-                            }
-                        } else if idx_case == 3 {  // Check East
-                            if map[[i-1, j+1]] == 0 && map[[i, j+1]] == 0 && map[[i+1, j+1]] == 0 {
-                                loc_move_to = Some([i, j+1]);
-                                on_x_of_destinations = Some(MapMark::FromW);
-                                break;
+                    } else { 
+                        for k in 0..4 {
+                            let idx_case = (idx_case_start + k) % 4;
+                            if idx_case == 0 { // Check North
+                                if map[[i-1, j-1]] == 0 && map[[i-1, j]] == 0 && map[[i-1, j+1]] == 0 {
+                                    loc_move_to = Some([i-1, j]);
+                                    on_x_of_destinations = Some(MapMark::FromS);
+                                    break;
+                                }
+                            } else if idx_case == 1 {  // Check South
+                                if map[[i+1, j-1]] == 0 && map[[i+1, j]] == 0 && map[[i+1, j+1]] == 0 {
+                                    loc_move_to = Some([i+1, j]);
+                                    on_x_of_destinations = Some(MapMark::FromN);
+                                    break;
+                                }
+                            } else if idx_case == 2 {  // Check West
+                                if map[[i-1, j-1]] == 0 && map[[i, j-1]] == 0 && map[[i+1, j-1]] == 0 {
+                                    loc_move_to = Some([i, j-1]);
+                                    on_x_of_destinations = Some(MapMark::FromE);
+                                    break;
+                                }
+                            } else if idx_case == 3 {  // Check East
+                                if map[[i-1, j+1]] == 0 && map[[i, j+1]] == 0 && map[[i+1, j+1]] == 0 {
+                                    loc_move_to = Some([i, j+1]);
+                                    on_x_of_destinations = Some(MapMark::FromW);
+                                    break;
+                                }
                             }
                         }
-                    }}
+                        no_one_moved = false;
+                    }
 
                     if let Some(loc_move_to) = loc_move_to {
                         // There is a place to move to.
@@ -183,43 +188,41 @@ fn main() {
         }
 
         idx_case_start = (idx_case_start + 1) % 4;
-    }
-    
-    // Calculate the score
-    let map = map.mapv(|x| u32::from(x));  // astype(uint32)
-    let sum_row = map.sum_axis(Axis(0));
-    let sum_col = map.sum_axis(Axis(1));
-    let mut empty_cols: usize = 0;
-    let mut empty_rows: usize = 0;
-    for j in 0..n {
-        if sum_row[j] != 0 {
-            break;
-        }
-        empty_cols += 1;
-    }
-    for j in (0..n).rev() {
-        if sum_row[j] != 0 {
-            break;
-        }
-        empty_cols += 1;
-    }
+        iter_count += 1;
 
-    for i in (0..m).rev() {
-        if sum_col[i] != 0 {
+        if no_one_moved {
+            println!("part2: {}", iter_count);
             break;
-        };
-        empty_rows += 1;
+        }
+
+        if iter_count == 10 {
+            // Calculate the score
+            let map = map.mapv(|x| u32::from(x));  // astype(uint32)
+            let sum_row = map.sum_axis(Axis(0));
+            let sum_col = map.sum_axis(Axis(1));
+            let mut empty_cols: usize = 0;
+            let mut empty_rows: usize = 0;
+            for j in 0..n {
+                if sum_row[j] != 0 { break; }
+                empty_cols += 1;
+            }
+            for j in (0..n).rev() {
+                if sum_row[j] != 0 { break; }
+                empty_cols += 1;
+            }
+            for i in (0..m).rev() {
+                if sum_col[i] != 0 { break; };
+                empty_rows += 1;
+            }
+            for i in (0..m).rev() {
+                if sum_col[i] != 0 { break; };
+                empty_rows += 1;
+            }
+            let m_trimmed = m - empty_rows;
+            let n_trimmed = n - empty_cols;
+            let num_elves = sum_col.sum();
+            assert!(num_elves == sum_row.sum());
+            println!("part1: {}", m_trimmed * n_trimmed - num_elves as usize);
+        }
     }
-    for i in (0..m).rev() {
-        if sum_col[i] != 0 {
-            break;
-        };
-        empty_rows += 1;
-    }
-    let m_trimmed = m - empty_rows;
-    let n_trimmed = n - empty_cols;
-    let num_elves = sum_col.sum();
-    assert!(num_elves == sum_row.sum());
-    println!("{}", m_trimmed * n_trimmed - num_elves as usize);
-    
 }
