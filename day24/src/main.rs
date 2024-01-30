@@ -2,7 +2,7 @@ extern crate ndarray;
 extern crate num;
 extern crate pathfinding;
 
-use ndarray::Array2;
+use ndarray::{Array2, NewAxis};
 use pathfinding::prelude::bfs;
 
 
@@ -56,6 +56,7 @@ fn main() {
     println!("Hello, world!");
     let data = include_bytes!("../input.txt");
     let mazes = build_maze(data);
+    println!("mazes.shape: {:?}", mazes.shape);
     let successors = |p: &Pos| {
         let idx_evolution = (p.2 + 1) % mazes.mazes.len() as isize;
         let current_maze = &mazes.mazes[idx_evolution as usize];
@@ -65,6 +66,11 @@ fn main() {
             successors.push(Pos(p.0, p.1, idx_evolution));
             if current_maze[[0, 0]] == 0 {
                 successors.push(Pos(0, 0, idx_evolution));
+            }
+        } else if p.0 == *m as isize {
+            successors.push(Pos(p.0, p.1, idx_evolution));
+            if current_maze[[m - 1, n - 1]] == 0 {
+                successors.push(Pos((m - 1) as isize, n - 1, idx_evolution));
             }
         } else {
             if current_maze[[p.0 as usize, p.1]] == 0 {
@@ -89,6 +95,24 @@ fn main() {
         ((p.0 as usize) == mazes.shape.0 - 1) && (p.1 == mazes.shape.1 - 1)
     };
     let result = bfs(&Pos(-1, 0, 0), successors, reached).unwrap();
-    println!("Result: {:?}", result);
-    println!("Result len: {}", result.len());
+    // println!("Result: {:?}", result);
+    println!("Part 1 len: {}", result.len());
+
+    let new_start_1 = {
+        let last = result.iter().rev().next().unwrap();
+        Pos(last.0 + 1, last.1, last.2 + 1)
+    };
+    let reached_rev = |p: &Pos| { 
+        ((p.0 as usize) == 0) && (p.1 == 0)
+    };
+    println!("New start: {:?}", new_start_1);
+    let result_rev = bfs(&new_start_1, successors, reached_rev).unwrap();
+
+    let new_start_2 = {
+        let last = result_rev.iter().rev().next().unwrap();
+        Pos(last.0 - 1, last.1, last.2 + 1)
+    };
+    let result2 = bfs(&new_start_2, successors, reached).unwrap();
+
+    println!("Part 2 len: {}", result.len() + result_rev.len() + result2.len());
 }
