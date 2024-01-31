@@ -2,12 +2,12 @@ extern crate ndarray;
 extern crate num;
 extern crate pathfinding;
 
-use ndarray::{Array2, NewAxis};
+use ndarray::Array2;
 use pathfinding::prelude::bfs;
 
 
 struct EvolvingMaze {
-    blizzards: Vec<(usize, usize, usize, usize)>,
+    // blizzards: Vec<(usize, usize, usize, usize)>,
     mazes: Vec<Array2<u32>>,
     shape: (usize, usize),
 }
@@ -45,7 +45,7 @@ fn build_maze(data: &[u8]) -> EvolvingMaze {
             mazes[idx_evolution][[i, j]] += 1;
         }
     }
-    EvolvingMaze {blizzards, mazes, shape: (m, n)}
+    EvolvingMaze {/*blizzards,*/ mazes, shape: (m, n)}
 }
 
 

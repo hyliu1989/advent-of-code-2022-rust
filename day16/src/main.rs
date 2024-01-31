@@ -119,7 +119,7 @@ fn parse_neighbors_and_relavent_volves(data: &str) -> (HashMap<&str, Vec<&str>>,
             .split_once(";").unwrap().0
             .parse::<i32>().unwrap();
         if flow_rate != 0 {
-            let k = curr.clone();
+            let k = curr;
             if !relavent_node_ids.contains_key(&k) {
                 relavent_node_ids.insert(k, id_used);
                 relavent_node_rate.push(flow_rate);
